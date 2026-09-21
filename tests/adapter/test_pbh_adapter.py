@@ -1,5 +1,6 @@
 import json
 import unittest
+from unittest.mock import patch
 
 from adapter.pbh_adapter import PBHAdapter, RosterBot, FixtureRoster
 
@@ -196,6 +197,10 @@ class PBHAdapterTests(unittest.TestCase):
         )
         self.assertTrue(valid["ok"])
         self.assertEqual(valid["requestId"], "r-after-big-int")
+    def test_arbitrary_json_value_error_is_not_swallowed(self):
+        with patch("adapter.pbh_adapter.json.loads", side_effect=ValueError("unexpected parser failure")):
+            with self.assertRaisesRegex(ValueError, "unexpected parser failure"):
+                self.adapter.handle_line(b"{}")
 
 
 if __name__ == "__main__":
