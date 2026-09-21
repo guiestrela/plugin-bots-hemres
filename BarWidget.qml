@@ -44,6 +44,16 @@ BarWidget {
             if (buttonCode === Qt.LeftButton)
                 root.panelOpen = !root.panelOpen
         }
+
+        Text {
+            anchors.centerIn: parent
+            text: "♟"
+            color: root.bar && root.bar.foreground ? root.bar.foreground : "white"
+            font.pixelSize: 16
+            textFormat: Text.PlainText
+            visible: true
+            Accessible.name: I18n.text("Hermes Bots", "Bots Hermes")
+        }
     }
 
     Popup {
