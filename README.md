@@ -1,24 +1,24 @@
 # Hermes Bots
 
-**Hermes Bots** is an alpha/prototype Omarchy `bar-widget` for a future,
-panel-only interface to Hermes bots. It is designed for the Quickshell-based
-Omarchy shell and the Glass Bar ecosystem, but it does not currently connect to
-Hermes or send tasks.
+**Hermes Bots** is an alpha Omarchy service/bar widget for a panel-only,
+read-only Hermes bot roster. It is designed for the Quickshell-based Omarchy
+shell and the Glass Bar ecosystem. It connects only to an explicitly configured
+local Hermes gateway and does not submit tasks yet.
 
-The project deliberately keeps the current bar entry point inert. The runtime
-RPC path, service lifecycle, and end-to-end Hermes behavior have not been
-verified. There is no automatic activation, no automatic task submission, and
-no fallback to a terminal or launcher.
+The bar entry point opens a bot panel with loading, error, empty, roster,
+selection, and avatar-placeholder states. The read-only roster path was tested
+against a local Hermes gateway. There is no automatic gateway activation, no
+automatic task submission, and no fallback to a terminal or launcher.
 
 ## Status
 
-**Alpha / prototype — not integrated.**
+**Alpha — read-only roster integrated; delegation not enabled.**
 
-The repository contains an isolated QML harness and an offline Python adapter
-fixture for contract-oriented tests. `ui/Main.qml` is a standalone
-`ApplicationWindow` harness, not a bar-widget entry point. `BarWidget.qml` is a
-minimal compatibility wrapper that renders a compact, non-interactive marker
-and explicitly does not open a panel or use RPC.
+The repository contains an isolated QML harness, an offline adapter fixture,
+and a live read-only WebSocket adapter. `ui/Main.qml` remains a standalone
+`ApplicationWindow` harness, while `BarWidget.qml` is the compact panel trigger.
+`Service.qml` invokes the allowlisted roster helper and exposes the result to
+the panel.
 
 Hermes Deck is an existing, separate Omarchy plugin. This plugin uses the
 non-conflicting ID `io.github.guiestrela.hermes-bots` and must not replace,
@@ -35,24 +35,24 @@ modify, or assume the behavior of Hermes Deck.
 The current repository was designed around Omarchy/Quickshell conventions. It
 is not a Waybar plugin.
 
-## Installation (future, after explicit approval)
+## Installation
 
-Do **not** install or enable this prototype in the active shell yet. It has not
-been approved for activation and its RPC runtime is unsupported.
-
-After the integration contract, runtime bridge, rollback plan, and coexistence
-with Glass Bar and Hermes Deck have been reviewed, an operator may use the
-standard Omarchy plugin workflow for the reviewed repository, for example:
+The reviewed plugin can be installed with the standard Omarchy workflow:
 
 ```sh
-omarchy plugin add <reviewed-repository-url>
+omarchy plugin add https://github.com/guiestrela/plugin-bots-hemres.git --yes
 omarchy plugin enable io.github.guiestrela.hermes-bots
 ```
 
-Those commands are documentation for a future, separately authorized change;
-they were not run for this task. Installation must not be treated as proof of
-RPC support. Do not edit `~/.config/omarchy`, Glass Bar, Hermes Deck, the
-Hermes gateway, or credentials as part of development or validation.
+Configure the widget with a loopback URL, for example:
+
+```sh
+omarchy bar set io.github.guiestrela.hermes-bots gatewayUrl \
+  ws://127.0.0.1:9119/api/ws
+```
+
+The Hermes gateway must already be running locally; the plugin does not start
+it. Installation and configuration are not proof that delegation is enabled.
 
 ## Development
 
@@ -151,18 +151,17 @@ allowlists, validation, redaction, correlation, and uncertainty handling.
 ## Roadmap
 
 1. Review and freeze the PBH RPC contract and security boundary.
-2. Implement a panel-only QML surface with explicit loading, empty, error,
-   unsupported, and delivery-uncertain states.
-3. Implement a minimal allowlisted local adapter without exposing credentials
+2. Implemented a panel-only QML surface with explicit loading, empty, error,
+   and roster states.
+3. Implemented a minimal allowlisted local adapter without exposing credentials
    or arbitrary Hermes methods.
-4. Verify the RPC runtime offline first, then perform separately authorized
-   integration tests with a non-sensitive fixture.
+4. Verified the read-only roster path against a local gateway with six profiles.
 5. Test coexistence with Glass Bar and Hermes Deck without duplicate services or
    automatic sends.
 6. Only after review, enable installation with a documented rollback path.
 
-Until those steps are complete, this repository is a prototype manifest and an
-inert bar-widget entry point, not a finished Hermes integration.
+Task submission, streaming, approvals, cancellation, and delivery uncertainty
+remain blocked until their contracts and security tests are implemented.
 
 ## License
 
