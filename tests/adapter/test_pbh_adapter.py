@@ -36,6 +36,74 @@ class PBHAdapterTests(unittest.TestCase):
         self.assertEqual(response["error"]["code"], "INVALID_REQUEST")
         self.assertNotIn("cli.exec", response["error"]["message"])
 
+    def test_non_string_operations_are_rejected_without_type_error(self):
+        for operation in ([], {}, None):
+            with self.subTest(operation=operation):
+                response = self.request("r-operation", operation)
+                self.assertFalse(response["ok"])
+                self.assertEqual(response["error"]["code"], "INVALID_REQUEST")
+                self.assertEqual(response["requestId"], "r-operation")
+
+    def test_version_requires_exact_integer_one(self):
+        for index, version in enumerate((True, False, 1.0, "1", None)):
+            with self.subTest(version=version):
+                response = self.adapter.handle({
+                    "version": version, "requestId": "r-version-" + str(index),
+                    "operation": "listBots"
+                })
+                self.assertFalse(response["ok"])
+                self.assertEqual(response["error"]["code"], "UNSUPPORTED_VERSION")
+                self.assertEqual(response["requestId"], "r-version-" + str(index))
+
+    def test_invalid_request_ids_are_never_reflected(self):
+        invalid_ids = ["line\nmarker", "x" * 129, "bad\ud800"]
+        for request_id in invalid_ids:
+            with self.subTest(request_id=repr(request_id)):
+                response = self.request(request_id, "listBots")
+                self.assertFalse(response["ok"])
+                self.assertEqual(response["error"]["code"], "INVALID_REQUEST")
+                self.assertEqual(response["requestId"], "")
+
+        valid = self.request("r-after-invalid-id", "listBots")
+        self.assertTrue(valid["ok"])
+
+    def test_surrogate_text_is_rejected_and_next_request_is_processed(self):
+        response = self.request(
+            "r-surrogate-text", "delegateTask",
+            {"botId": "backend", "text": "bad\ud800"},
+        )
+        self.assertFalse(response["ok"])
+        self.assertEqual(response["error"]["code"], "INVALID_REQUEST")
+        self.assertEqual(response["requestId"], "r-surrogate-text")
+
+        valid = self.request(
+            "r-after-surrogate", "delegateTask",
+            {"botId": "backend", "text": "valid text"},
+        )
+        self.assertTrue(valid["ok"])
+
+    def test_excessive_json_depth_is_sanitized_and_next_request_is_processed(self):
+        reasonable = envelope = {
+            "version": 1, "requestId": "r-reasonable-depth", "operation": "listBots"
+        }
+        for _ in range(32):
+            envelope["metadata"] = {}
+            envelope = envelope["metadata"]
+        self.assertTrue(self.adapter.handle(reasonable)["ok"])
+
+        nested = value = {}
+        for _ in range(65):
+            value["nested"] = {}
+            value = value["nested"]
+        nested.update({"version": 1, "requestId": "r-deep", "operation": "listBots"})
+        response = self.adapter.handle(nested)
+        self.assertFalse(response["ok"])
+        self.assertEqual(response["error"]["code"], "INVALID_REQUEST")
+        self.assertEqual(response["requestId"], "")
+
+        valid = self.request("r-after-depth", "listBots")
+        self.assertTrue(valid["ok"])
+
     def test_envelope_validation_rejects_version_id_and_params_errors(self):
         cases = [
             ({"version": 2, "requestId": "r", "operation": "listBots"}, "UNSUPPORTED_VERSION"),

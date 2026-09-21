@@ -16,6 +16,7 @@ PROTOCOL_VERSION = 1
 MAX_LINE_BYTES = 4 * 1024 * 1024
 MAX_TEXT_BYTES = 16 * 1024
 MAX_ID_BYTES = 128
+MAX_JSON_DEPTH = 64
 _ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$")
 _FORBIDDEN_KEYS = {
     "command", "executable", "argv", "cwd", "path", "url", "token",
@@ -56,23 +57,27 @@ class PBHAdapter:
         try:
             text = raw.decode("utf-8")
             envelope = json.loads(text)
-        except (UnicodeDecodeError, json.JSONDecodeError):
+        except (UnicodeDecodeError, json.JSONDecodeError, RecursionError):
             return self._error("", "INVALID_REQUEST", "Envelope inválido.", False)
         return self.handle(envelope)
 
     def handle(self, envelope: Any) -> dict[str, Any]:
-        request_id = envelope.get("requestId", "") if isinstance(envelope, dict) else ""
-        safe_request_id = request_id if isinstance(request_id, str) else ""
+        if not self._within_depth(envelope):
+            return self._error("", "INVALID_REQUEST", "Envelope inválido.", False)
         if not isinstance(envelope, dict):
             return self._error("", "INVALID_REQUEST", "Envelope inválido.", False)
-        if envelope.get("version") != PROTOCOL_VERSION:
+        request_id = envelope.get("requestId", "")
+        safe_request_id = request_id if self._valid_id(request_id) else ""
+        version = envelope.get("version")
+        if type(version) is not int or version != PROTOCOL_VERSION:
             code = "UNSUPPORTED_VERSION" if "version" in envelope else "INVALID_REQUEST"
             return self._error(safe_request_id, code, "Versão do protocolo não suportada.", False)
         if not self._valid_id(request_id):
-            return self._error("" if not isinstance(request_id, str) else request_id,
-                               "INVALID_REQUEST", "requestId inválido.", False)
+            return self._error("", "INVALID_REQUEST", "requestId inválido.", False)
         operation = envelope.get("operation")
-        if operation not in {"listBots", "getAvatar", "openChat", "delegateTask"}:
+        if not isinstance(operation, str) or operation not in {
+            "listBots", "getAvatar", "openChat", "delegateTask"
+        }:
             return self._error(request_id, "INVALID_REQUEST", "Operação não permitida.", False)
         params = envelope.get("params", {})
         if not isinstance(params, dict) or self._has_forbidden_key(envelope):
@@ -116,7 +121,11 @@ class PBHAdapter:
         text = params.get("text")
         if not isinstance(text, str) or not text or "\x00" in text:
             return self._error(request_id, "INVALID_REQUEST", "Texto inválido.", False)
-        if len(text.encode("utf-8")) > MAX_TEXT_BYTES:
+        try:
+            text_bytes = text.encode("utf-8")
+        except UnicodeEncodeError:
+            return self._error(request_id, "INVALID_REQUEST", "Texto inválido.", False)
+        if len(text_bytes) > MAX_TEXT_BYTES:
             return self._error(request_id, "LIMIT_EXCEEDED", "Texto excede o limite.", False)
         # No prompt is sent and no confirmation boolean is trusted in this fixture.
         return self._success(request_id, {
@@ -129,7 +138,27 @@ class PBHAdapter:
 
     @staticmethod
     def _valid_id(value: Any) -> bool:
-        return isinstance(value, str) and bool(value) and len(value.encode("utf-8")) <= MAX_ID_BYTES and bool(_ID_RE.fullmatch(value))
+        if not isinstance(value, str) or not value:
+            return False
+        try:
+            if len(value.encode("utf-8")) > MAX_ID_BYTES:
+                return False
+        except UnicodeEncodeError:
+            return False
+        return bool(_ID_RE.fullmatch(value))
+
+    @staticmethod
+    def _within_depth(value: Any) -> bool:
+        stack = [(value, 1)]
+        while stack:
+            current, depth = stack.pop()
+            if depth > MAX_JSON_DEPTH:
+                return False
+            if isinstance(current, dict):
+                stack.extend((item, depth + 1) for item in current.values())
+            elif isinstance(current, list):
+                stack.extend((item, depth + 1) for item in current)
+        return True
 
     @classmethod
     def _has_forbidden_key(cls, value: Any) -> bool:

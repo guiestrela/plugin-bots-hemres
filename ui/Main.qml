@@ -59,6 +59,7 @@ ApplicationWindow {
             anchors.rightMargin: OmarchyTokens.spacing
             Label {
                 text: qsTr("Bots Hermes")
+                textFormat: Text.PlainText
                 color: OmarchyTokens.text
                 font.bold: true
                 Layout.fillWidth: true
@@ -80,6 +81,7 @@ ApplicationWindow {
 
         Label {
             text: window.stateTitle()
+            textFormat: Text.PlainText
             color: OmarchyTokens.text
             font.pixelSize: 22
             font.bold: true
@@ -89,6 +91,7 @@ ApplicationWindow {
         }
         Label {
             text: window.stateDescription()
+            textFormat: Text.PlainText
             color: OmarchyTokens.mutedText
             wrapMode: Text.WordWrap
             Layout.fillWidth: true
@@ -112,6 +115,7 @@ ApplicationWindow {
                       : window.viewState === "secret-sudo"
                         ? qsTr("Recusado: secret.request e sudo.request não são suportados no painel.")
                         : window.stateDescription()
+                textFormat: Text.PlainText
                 color: OmarchyTokens.text
                 wrapMode: Text.WordWrap
                 Accessible.role: Accessible.Alert
@@ -136,6 +140,7 @@ ApplicationWindow {
                 Label {
                     visible: window.viewState === "empty"
                     text: qsTr("Nenhum bot disponível")
+                    textFormat: Text.PlainText
                     color: OmarchyTokens.mutedText
                     Layout.alignment: Qt.AlignHCenter
                 }
@@ -181,6 +186,7 @@ ApplicationWindow {
                 anchors.fill: parent
                 Label {
                     text: qsTr("Destinatário: %1").arg(window.selectedBotId.length > 0 ? window.selectedBotId : qsTr("nenhum"))
+                    textFormat: Text.PlainText
                     color: OmarchyTokens.text
                     Accessible.name: text
                 }
@@ -196,6 +202,7 @@ ApplicationWindow {
                 }
                 Label {
                     text: qsTr("Não inclua segredos. Envio real permanece unsupported.")
+                    textFormat: Text.PlainText
                     color: OmarchyTokens.mutedText
                     Accessible.name: text
                 }
@@ -215,6 +222,7 @@ ApplicationWindow {
 
         Label {
             text: qsTr("Harness isolado · sem Hermes real · sem serviço global · sem instalação/ativação")
+            textFormat: Text.PlainText
             color: OmarchyTokens.mutedText
             font.pixelSize: 11
             horizontalAlignment: Text.AlignHCenter

@@ -40,6 +40,7 @@ ItemDelegate {
             spacing: 2
             Label {
                 text: row.botName
+                textFormat: Text.PlainText
                 color: OmarchyTokens.text
                 font.bold: true
                 elide: Text.ElideRight
@@ -47,12 +48,14 @@ ItemDelegate {
             }
             Label {
                 text: row.botRole.length > 0 ? row.botRole : qsTr("Função não informada")
+                textFormat: Text.PlainText
                 color: OmarchyTokens.mutedText
                 elide: Text.ElideRight
                 Layout.fillWidth: true
             }
             Label {
                 text: qsTr("Disponibilidade: %1").arg(row.availability)
+                textFormat: Text.PlainText
                 color: OmarchyTokens.mutedText
                 font.pixelSize: 11
                 Layout.fillWidth: true

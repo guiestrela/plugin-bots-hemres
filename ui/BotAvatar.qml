@@ -27,7 +27,7 @@ Item {
             anchors.fill: parent
             anchors.margins: 1
             visible: avatar.imageValid && avatar.imageSource.length > 0
-            source: avatar.imageSource
+            source: avatar.imageValid ? avatar.imageSource : ""
             fillMode: Image.PreserveAspectCrop
             asynchronous: false
             smooth: true

@@ -5,6 +5,8 @@ import unittest
 ROOT = Path(__file__).parents[2]
 UI = ROOT / "ui"
 MAIN = (UI / "Main.qml").read_text(encoding="utf-8")
+BOT_ROW = (UI / "BotRow.qml").read_text(encoding="utf-8")
+AVATAR = (UI / "BotAvatar.qml").read_text(encoding="utf-8")
 TOKENS = (UI / "OmarchyTokens.qml").read_text(encoding="utf-8")
 
 
@@ -32,6 +34,18 @@ class QmlHarnessContractTests(unittest.TestCase):
             self.assertIn("Accessible.", source)
         self.assertIn("keyNavigationEnabled: true", MAIN)
         self.assertIn("focus: true", MAIN)
+
+    def test_variable_labels_are_explicitly_plain_text(self):
+        for source in (MAIN, BOT_ROW):
+            self.assertGreater(source.count("Label {"), 0)
+            self.assertEqual(source.count("Label {"), source.count("textFormat: Text.PlainText"))
+        for variable in ("botName", "botRole", "availability", "selectedBotId"):
+            self.assertIn(variable, MAIN + BOT_ROW)
+
+    def test_avatar_source_is_empty_when_image_is_invalid(self):
+        source_lines = [line.strip() for line in AVATAR.splitlines() if line.strip().startswith("source:")]
+        self.assertEqual(source_lines, ["source: avatar.imageValid ? avatar.imageSource : \"\""])
+        self.assertIn("imageValid", source_lines[0])
 
     def test_semantic_omarchy_tokens_are_verifiable(self):
         for token in ("Color.popups", "Color.accent", "Color.urgent", "Style.spacing", "Style.cornerRadius"):
