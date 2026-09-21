@@ -1,13 +1,12 @@
-import QtQuick 2.15
-import QtQuick.Controls 2.15
+import QtQuick
+import QtQuick.Controls
+import Quickshell
+import qs.Ui
 import "ui"
 
-Item {
+BarWidget {
     id: root
-
-    property var bar
-    property string moduleName
-    property var settings
+    moduleName: "io.github.guiestrela.hermes-bots"
 
     property var shell: null
     // Compatibility injection point; transport ownership is the persistent service.
@@ -17,7 +16,6 @@ Item {
     property string adapterState: service ? service.viewState : "error"
     property string adapterError: service ? service.error : qsTr("Serviço Hermes não carregado.")
     property string selectedProfile: service ? service.selectedProfile : ""
-    property bool panelOpen: false
 
     function refreshService() {
         if (root.shell && root.shell.serviceFor)
@@ -30,36 +28,22 @@ Item {
             panelContent.service = root.service
     }
 
-    implicitWidth: 30
-    implicitHeight: bar && bar.barSize ? bar.barSize : 26
+    property bool panelOpen: false
+    property string tooltipText: qsTr("Bots Hermes — abrir painel de perfis")
 
-    Accessible.role: Accessible.Button
-    Accessible.name: qsTr("Bots Hermes")
-    Accessible.description: qsTr("Abrir painel de perfis Hermes")
-    Accessible.onPressAction: panelOpen = !panelOpen
+    implicitWidth: button.implicitWidth
+    implicitHeight: button.implicitHeight
 
-    Rectangle {
-        anchors.fill: parent
-        radius: height / 2
-        color: mouse.containsMouse ? Qt.alpha(root.bar && root.bar.foreground ? root.bar.foreground : "white", 0.18) : "transparent"
-
-        Text {
-            anchors.centerIn: parent
-            text: qsTr("♟")
-            color: root.bar && root.bar.foreground ? root.bar.foreground : "white"
-            font.family: root.bar && root.bar.fontFamily ? root.bar.fontFamily : "monospace"
-            font.pixelSize: 15
-            Accessible.ignored: true
+    WidgetButton {
+        id: button
+        bar: root.bar
+        text: "♟"
+        labelVisible: false
+        tooltipText: root.tooltipText
+        onPressed: function(buttonCode) {
+            if (buttonCode === Qt.LeftButton)
+                root.panelOpen = !root.panelOpen
         }
-    }
-
-    MouseArea {
-        id: mouse
-        anchors.fill: parent
-        hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
-        accessibleName: qsTr("Abrir painel de bots Hermes")
-        onClicked: root.panelOpen = !root.panelOpen
     }
 
     Popup {

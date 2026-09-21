@@ -64,8 +64,8 @@ class QmlHarnessContractTests(unittest.TestCase):
 
     def test_bar_widget_is_interactive_and_uses_bot_icon(self):
         self.assertNotIn('text: qsTr("HB")', BAR)
-        self.assertIn('text: qsTr("♟")', BAR)
-        self.assertIn("onClicked: root.panelOpen = !root.panelOpen", BAR)
+        self.assertIn('text: "♟"', BAR)
+        self.assertIn("onPressed: function(buttonCode)", BAR)
         self.assertIn("property var adapter", BAR)
 
     def test_panel_covers_adapter_states_and_real_profile_fields(self):
