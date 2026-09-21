@@ -7,13 +7,10 @@
   "license": "MIT",
   "description": "Read-only Hermes bot roster with an explicit loopback gateway configuration.",
   "kinds": [
-    "service",
-    "bar-widget"
+  "bar-widget"
   ],
-  "keepLoaded": true,
   "entryPoints": {
-    "service": "service.qml",
-    "barWidget": "BarWidget.qml"
+  "barWidget": "BarWidget.qml"
   },
   "barWidget": {
     "displayName": "Hermes Bots",

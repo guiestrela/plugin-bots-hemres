@@ -16,9 +16,8 @@ class ServiceContractTests(unittest.TestCase):
         cls.panel = (ROOT / "ui" / "BotPanel.qml").read_text(encoding="utf-8")
 
     def test_manifest_registers_persistent_service(self):
-        self.assertIn("service", self.manifest["kinds"])
-        self.assertTrue(self.manifest["keepLoaded"])
-        self.assertEqual(self.manifest["entryPoints"]["service"], "service.qml")
+        self.assertIn("bar-widget", self.manifest["kinds"])
+        self.assertEqual(self.manifest["entryPoints"]["barWidget"], "BarWidget.qml")
 
     def test_service_exposes_read_only_panel_state_and_rpc_calls(self):
         for property_name in ("profiles", "loading", "error", "selectedProfile"):
