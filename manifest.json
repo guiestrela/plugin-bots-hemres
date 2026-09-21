@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "id": "io.github.guiestrela.hermes-bots",
+  "name": "Hermes Bots",
+  "version": "0.1.0",
+  "author": "Guiestrela",
+  "license": "MIT",
+  "description": "Alpha Omarchy bar widget for a future panel-only Hermes bot interface.",
+  "kinds": [
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "barWidget": "BarWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "Hermes Bots",
+    "description": "Panel-only Hermes bot access; RPC runtime support is not verified.",
+    "category": "AI",
+    "aliases": [
+      "hermes-bots",
+      "bots-hermes"
+    ],
+    "allowMultiple": false,
+    "defaultSection": "right"
+  }
+}
