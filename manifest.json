@@ -5,11 +5,14 @@
   "version": "0.1.0",
   "author": "Guiestrela",
   "license": "MIT",
-  "description": "Alpha Omarchy bar widget for a future panel-only Hermes bot interface.",
+  "description": "Read-only Hermes bot roster with an explicit loopback gateway configuration.",
   "kinds": [
+    "service",
     "bar-widget"
   ],
+  "keepLoaded": true,
   "entryPoints": {
+    "service": "Service.qml",
     "barWidget": "BarWidget.qml"
   },
   "barWidget": {
@@ -21,6 +24,14 @@
       "bots-hermes"
     ],
     "allowMultiple": false,
-    "defaultSection": "right"
+    "defaultSection": "right",
+    "schema": [
+      {
+        "key": "gatewayUrl",
+        "type": "string",
+        "label": "Loopback gateway URL (ws://127.0.0.1:<port>/api/ws)",
+        "defaultValue": ""
+      }
+    ]
   }
 }
