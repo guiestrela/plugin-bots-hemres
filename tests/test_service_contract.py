@@ -10,7 +10,7 @@ class ServiceContractTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.manifest = json.loads((ROOT / "manifest.json").read_text(encoding="utf-8"))
-        cls.service = (ROOT / "Service.qml").read_text(encoding="utf-8")
+        cls.service = (ROOT / "service.qml").read_text(encoding="utf-8")
         cls.bar = (ROOT / "BarWidget.qml").read_text(encoding="utf-8")
         cls.helper = (ROOT / "scripts" / "hermes_profiles.py").read_text(encoding="utf-8")
         cls.panel = (ROOT / "ui" / "BotPanel.qml").read_text(encoding="utf-8")
@@ -18,7 +18,7 @@ class ServiceContractTests(unittest.TestCase):
     def test_manifest_registers_persistent_service(self):
         self.assertIn("service", self.manifest["kinds"])
         self.assertTrue(self.manifest["keepLoaded"])
-        self.assertEqual(self.manifest["entryPoints"]["service"], "Service.qml")
+        self.assertEqual(self.manifest["entryPoints"]["service"], "service.qml")
 
     def test_service_exposes_read_only_panel_state_and_rpc_calls(self):
         for property_name in ("profiles", "loading", "error", "selectedProfile"):

@@ -12,7 +12,7 @@
   ],
   "keepLoaded": true,
   "entryPoints": {
-    "service": "Service.qml",
+    "service": "service.qml",
     "barWidget": "BarWidget.qml"
   },
   "barWidget": {
