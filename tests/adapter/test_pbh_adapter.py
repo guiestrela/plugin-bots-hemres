@@ -181,6 +181,22 @@ class PBHAdapterTests(unittest.TestCase):
         self.assertEqual(response["error"]["code"], "INVALID_REQUEST")
         self.assertNotIn("top-secret", json.dumps(response))
 
+    def test_process_line_sanitizes_oversized_json_integer_and_processes_next_request(self):
+        oversized = (
+            b'{"version":1,"requestId":"r-big-int","operation":"listBots",'
+            b'"value":' + b"9" * 5000 + b"}"
+        )
+        response = self.adapter.handle_line(oversized)
+        self.assertFalse(response["ok"])
+        self.assertEqual(response["error"]["code"], "INVALID_REQUEST")
+        self.assertNotIn("9" * 5000, json.dumps(response))
+
+        valid = self.adapter.handle_line(
+            b'{"version":1,"requestId":"r-after-big-int","operation":"listBots"}'
+        )
+        self.assertTrue(valid["ok"])
+        self.assertEqual(valid["requestId"], "r-after-big-int")
+
 
 if __name__ == "__main__":
     unittest.main()

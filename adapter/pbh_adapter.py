@@ -56,8 +56,15 @@ class PBHAdapter:
             return self._error("", "LIMIT_EXCEEDED", "Envelope excede o limite.", False)
         try:
             text = raw.decode("utf-8")
+        except UnicodeDecodeError:
+            return self._error("", "INVALID_REQUEST", "Envelope inválido.", False)
+        try:
             envelope = json.loads(text)
-        except (UnicodeDecodeError, json.JSONDecodeError, RecursionError):
+        except (json.JSONDecodeError, RecursionError):
+            return self._error("", "INVALID_REQUEST", "Envelope inválido.", False)
+        except ValueError as exc:
+            if not _is_json_integer_limit_error(exc):
+                raise
             return self._error("", "INVALID_REQUEST", "Envelope inválido.", False)
         return self.handle(envelope)
 
@@ -199,3 +206,10 @@ def _safe_text(value: Any, fallback: str) -> str:
     clean = "".join(char for char in value if char in "\n\t" or ord(char) >= 0x20)
     clean = clean.strip()
     return clean[:256] or fallback
+
+
+def _is_json_integer_limit_error(error: ValueError) -> bool:
+    return bool(re.match(
+        r"^Exceeds the limit \(\d+ digits\) for integer string conversion(?:$|:)",
+        str(error),
+    ))
