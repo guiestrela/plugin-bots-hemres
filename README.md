@@ -116,16 +116,11 @@ Allowlisted local adapter (future)
 Hermes Gateway / runtime (not verified)
 ```
 
-The proposed RPC boundary is documented in `docs/rpc-contract.md`. The QML
-surface must not receive shell commands, profile paths, history, tokens, or
-credentials. The adapter, once separately implemented and verified, must own
-transport, allowlists, validation, redaction, correlation, and uncertainty
-handling.
-
-The UI discovery and host findings are recorded in `docs/ui-discovery.md`.
-They document Quickshell/Omarchy behavior, Glass Bar compatibility concerns,
-panel-only requirements, and the distinction between documented protocol
-methods and a verified runtime.
+The proposed RPC boundary, UI discovery, and host findings are maintained
+outside this repository as project working notes. The QML surface must not
+receive shell commands, profile paths, history, tokens, or credentials. The
+adapter, once separately implemented and verified, must own transport,
+allowlists, validation, redaction, correlation, and uncertainty handling.
 
 ## Security
 
