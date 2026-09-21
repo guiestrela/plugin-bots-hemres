@@ -10,7 +10,7 @@ Item {
     property var adapter: null
     property var profiles: []
     property string viewState: "error"
-    property string errorMessage: qsTr("Adaptador não conectado.")
+    property string errorMessage: I18n.text("Adapter not connected.", "Adaptador não conectado.")
     property string selectedProfile: ""
     property bool delegationEnabled: false
     property string delegateTask: "unsupported"
@@ -37,7 +37,7 @@ Item {
             profileModel.append({
                 profileName: name,
                 displayName: displayName,
-                description: profileValue(profile, "description", "description", qsTr("Descrição não informada")),
+                description: profileValue(profile, "description", "description", I18n.text("Description not provided", "Descrição não informada")),
                 hasAvatar: Boolean(profile && (profile.has_avatar || profile.hasAvatar)),
                 avatarSource: profileValue(profile, "avatar", "avatarSource", "")
             })
@@ -73,7 +73,7 @@ Item {
         spacing: OmarchyTokens.compactSpacing
 
         Label {
-            text: qsTr("Bots Hermes")
+            text: I18n.text("Hermes Bots", "Bots Hermes")
             textFormat: Text.PlainText
             color: OmarchyTokens.text
             font.bold: true
@@ -83,10 +83,10 @@ Item {
             Accessible.name: text
         }
         Label {
-            text: panel.viewState === "loading" ? qsTr("Carregando perfis…")
+            text: panel.viewState === "loading" ? I18n.text("Loading profiles…", "Carregando perfis…")
                   : panel.viewState === "error" ? panel.errorMessage
-                  : panel.viewState === "empty" ? qsTr("Nenhum perfil disponível")
-                  : qsTr("Selecione um perfil para ver seus detalhes")
+                  : panel.viewState === "empty" ? I18n.text("No profiles available", "Nenhum perfil disponível")
+                  : I18n.text("Select a profile to see its details", "Selecione um perfil para ver seus detalhes")
             textFormat: Text.PlainText
             color: panel.viewState === "error" ? OmarchyTokens.urgent : OmarchyTokens.mutedText
             wrapMode: Text.WordWrap

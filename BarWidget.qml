@@ -14,7 +14,7 @@ BarWidget {
     property var service: null
     property var profiles: service ? service.profiles : []
     property string adapterState: service ? service.viewState : "error"
-    property string adapterError: service ? service.error : qsTr("Serviço Hermes não carregado.")
+    property string adapterError: service ? service.error : I18n.text("Hermes service not loaded.", "Serviço Hermes não carregado.")
     property string selectedProfile: service ? service.selectedProfile : ""
 
     function refreshService() {
@@ -29,7 +29,7 @@ BarWidget {
     }
 
     property bool panelOpen: false
-    property string tooltipText: qsTr("Bots Hermes — abrir painel de perfis")
+    property string tooltipText: I18n.text("Hermes Bots — open profiles panel", "Bots Hermes — abrir painel de perfis")
 
     implicitWidth: button.implicitWidth
     implicitHeight: button.implicitHeight
