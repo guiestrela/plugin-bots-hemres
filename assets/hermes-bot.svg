@@ -1,10 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <g fill="none" stroke="#cdd6f4" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
-    <rect x="12" y="18" width="40" height="32" rx="8" fill="#313244"/>
-    <path d="M32 8v10M26 8h12"/>
-    <circle cx="24" cy="32" r="3" fill="#89b4fa" stroke="none"/>
-    <circle cx="40" cy="32" r="3" fill="#89b4fa" stroke="none"/>
-    <path d="M23 42h18"/>
-    <path d="M12 30H6M52 30h6"/>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="10 1 22 25" width="22" height="25">
+  <desc>Mint polygon head with two dark slanted eyes, traced from the supplied Hermes reference. Transparent background.</desc>
+  <path fill="#c9dbcb" d="M21 2 31 8 31 19 23 25 20 25 12 20 11 17 11 10 12 8Z"/>
+  <path fill="#0a130b" d="M18 9 20 8 19 15 17 16Z"/>
+  <path fill="#0a130b" d="M24 9 26 8 25 15 23 16Z"/>
 </svg>

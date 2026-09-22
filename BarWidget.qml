@@ -107,30 +107,25 @@ BarWidget {
         }
     }
 
-    Popup {
-        id: panelPopup
-        parent: root
-        x: 0
-        y: root.height + 4
-        width: 360
-        height: Math.min(560, panelContent.implicitHeight + OmarchyTokens.spacing * 2)
-        padding: 0
-        modal: false
-        focus: true
-        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
-        visible: root.panelOpen
-        onClosed: root.panelOpen = false
+    // The host coordinates owners through close(); PopupCard supplies its
+    // own PopupWindow, anchor geometry and outside-click dismissal.
+    function close() { root.panelOpen = false }
 
-        background: Rectangle {
-            color: OmarchyTokens.popupBackground
-            border.color: OmarchyTokens.popupBorder
-            border.width: 1
-            radius: OmarchyTokens.cornerRadius
-        }
+    PopupCard {
+        id: panelPopup
+        anchorItem: button
+        bar: root.bar
+        owner: root
+        open: root.panelOpen
+        padding: 0
+        contentWidth: fittedContentWidth(360)
+        contentHeight: fittedContentHeight(panelContent.implicitHeight, 560)
 
         BotPanel {
             id: panelContent
             anchors.fill: parent
+            focus: root.panelOpen
+            Keys.onEscapePressed: root.close()
             service: root.service
             profiles: root.profiles
             selectedProfile: root.selectedProfile
