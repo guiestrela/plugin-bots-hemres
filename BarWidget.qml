@@ -73,7 +73,11 @@ BarWidget {
     }
 
     property bool panelOpen: false
-    property string tooltipText: I18n.text("Hermes Bots — open profiles panel", "Bots Hermes — abrir painel de perfis")
+    property string tooltipText: I18n.text("Hermes Bots — open profiles panel", "Bots Hermes — abrir painel de bots")
+    onPanelOpenChanged: {
+        if (panelOpen && (rosterProfiles.length === 0 || rosterError.length > 0))
+            refreshRoster()
+    }
 
     implicitWidth: button.implicitWidth
     implicitHeight: button.implicitHeight
@@ -81,7 +85,7 @@ BarWidget {
     WidgetButton {
         id: button
         bar: root.bar
-        text: "♟"
+        text: ""
         labelVisible: false
         tooltipText: root.tooltipText
         onPressed: function(buttonCode) {
@@ -89,14 +93,13 @@ BarWidget {
                 root.panelOpen = !root.panelOpen
         }
 
-        Image {
+        Avatar {
             anchors.centerIn: parent
-            source: Qt.resolvedUrl("assets/hermes-bot.svg")
-            sourceSize: Qt.size(20, 20)
-            width: 20
-            height: 20
-            fillMode: Image.PreserveAspectFit
-            smooth: true
+            diameter: 20
+            shape: "hex"
+            fill: "#c9dbcb"
+            eyeColor: "#0a130b"
+            animate: false
             Accessible.name: I18n.text("Hermes bot", "Bot Hermes")
         }
     }

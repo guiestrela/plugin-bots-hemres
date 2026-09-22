@@ -21,11 +21,16 @@ Item {
     function profileValue(profile, snake, camel, fallback) {
         if (!profile)
             return fallback
-        if (profile[snake] !== undefined && profile[snake] !== null)
+        if (profile[snake] !== undefined && profile[snake] !== null && String(profile[snake]).trim().length > 0)
             return String(profile[snake])
-        if (profile[camel] !== undefined && profile[camel] !== null)
+        if (profile[camel] !== undefined && profile[camel] !== null && String(profile[camel]).trim().length > 0)
             return String(profile[camel])
         return fallback
+    }
+
+    function fallbackAvatarColor(index) {
+        var palette = ["#c9dbcb", "#8fb8e8", "#d8a7e8", "#e8c58f", "#9fd6c2", "#d89ca8"]
+        return palette[index % palette.length]
     }
 
     function profileMeta(profile) {
@@ -47,7 +52,7 @@ Item {
                 hasAvatar: Boolean(profile && (profile.has_avatar || profile.hasAvatar)),
                 avatarSource: profileValue(profile, "avatar", "avatarSource", ""),
                 avatarShape: meta.shape || "squircle",
-                avatarColor: meta.color || "#777777"
+                avatarColor: meta.color || fallbackAvatarColor(i)
             })
         }
         if (profileModel.count === 0)
@@ -107,11 +112,11 @@ Item {
             visible: panel.viewState === "loading"
             running: visible
             Layout.alignment: Qt.AlignHCenter
-            Accessible.name: qsTr("Carregando perfis")
+            Accessible.name: I18n.text("Loading profiles", "Carregando perfis")
         }
         Label {
             visible: panel.viewState === "empty"
-            text: qsTr("O adaptador retornou uma lista vazia.")
+            text: I18n.text("The adapter returned an empty list.", "O adaptador retornou uma lista vazia.")
             textFormat: Text.PlainText
             color: OmarchyTokens.mutedText
             Layout.alignment: Qt.AlignHCenter
@@ -131,7 +136,10 @@ Item {
             Layout.preferredHeight: Math.min(contentHeight, 240)
             Layout.fillHeight: true
             Accessible.role: Accessible.List
-            Accessible.name: qsTr("Perfis Hermes")
+            Accessible.name: I18n.text("Hermes profiles", "Perfis Hermes")
+            ScrollBar.vertical: ScrollBar {
+                policy: ScrollBar.AsNeeded
+            }
             delegate: BotRow {
                 width: profileList.width
                 botId: model.profileName
@@ -156,14 +164,14 @@ Item {
 
         GroupBox {
             visible: panel.viewState === "ready" && profileModel.count > 0
-            title: qsTr("Delegar tarefa")
+            title: I18n.text("Delegate task", "Delegar tarefa")
             Layout.fillWidth: true
             enabled: false
             Accessible.name: qsTr("Delegação desabilitada")
             ColumnLayout {
                 anchors.fill: parent
                 TextArea {
-                    placeholderText: qsTr("Disponível quando o adapter RPC for verificado")
+                    placeholderText: I18n.text("Available when RPC adapter is verified", "Disponível quando o adapter RPC for verificado")
                     readOnly: true
                     enabled: false
                     Layout.fillWidth: true
@@ -171,14 +179,14 @@ Item {
                     Accessible.name: qsTr("Texto da delegação desabilitado")
                 }
                 Button {
-                    text: qsTr("Delegar (indisponível)")
+                    text: I18n.text("Delegate (unavailable)", "Delegar (indisponível)")
                     enabled: false
                     Accessible.name: qsTr("Delegar tarefa — RPC_RUNTIME_UNVERIFIED")
                     Accessible.description: qsTr("Nenhum prompt é enviado pelo painel.")
                     Layout.alignment: Qt.AlignRight
                 }
                 Label {
-                    text: qsTr("RPC_RUNTIME_UNVERIFIED — seleção visual apenas; transporte não conectado.")
+                    text: I18n.text("RPC_RUNTIME_UNVERIFIED — visual selection only; transport not connected.", "RPC_RUNTIME_UNVERIFIED — seleção visual apenas; transporte não conectado.")
                     textFormat: Text.PlainText
                     color: OmarchyTokens.mutedText
                     wrapMode: Text.WordWrap

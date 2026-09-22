@@ -17,7 +17,7 @@ ItemDelegate {
     implicitHeight: 72
     highlighted: selected
     Accessible.role: Accessible.ListItem
-    Accessible.name: qsTr("%1, %2").arg(botName).arg(botRole.length > 0 ? botRole : qsTr("função não informada"))
+    Accessible.name: qsTr("%1, %2").arg(botName).arg(botRole.length > 0 ? botRole : I18n.text("role not provided", "função não informada"))
     Accessible.description: selected ? qsTr("Selecionado") : qsTr("Pressione Enter ou Espaço para selecionar")
     Accessible.onPressAction: clicked()
 
@@ -50,14 +50,14 @@ ItemDelegate {
                 Layout.fillWidth: true
             }
             Label {
-                text: row.botRole.length > 0 ? row.botRole : qsTr("Função não informada")
+                text: row.botRole.length > 0 ? row.botRole : I18n.text("Role not provided", "Função não informada")
                 textFormat: Text.PlainText
                 color: OmarchyTokens.mutedText
                 elide: Text.ElideRight
                 Layout.fillWidth: true
             }
             Label {
-                text: qsTr("Disponibilidade: %1").arg(row.availability)
+                text: I18n.text("Availability: %1", "Disponibilidade: %1").arg(row.availability)
                 textFormat: Text.PlainText
                 color: OmarchyTokens.mutedText
                 font.pixelSize: 11
