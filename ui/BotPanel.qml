@@ -70,7 +70,7 @@ Item {
     }
 
     implicitWidth: 360
-    implicitHeight: selectedProfile.length > 0 ? 560 : 520
+    implicitHeight: selectedProfile.length > 0 ? 620 : 520
 
     function profileValue(profile, snake, camel, fallback) {
         if (!profile)
@@ -333,7 +333,9 @@ Item {
                         font.family: OmarchyTokens.fontFamily
                         font.pixelSize: OmarchyTokens.fontBody
                         Layout.fillWidth: true
-                        Layout.preferredHeight: 58
+                        Layout.minimumHeight: 58
+                        Layout.maximumHeight: 140
+                        Layout.preferredHeight: Math.max(58, Math.min(140, inlineTaskInput.contentHeight))
                         leftPadding: OmarchyTokens.spacing
                         rightPadding: OmarchyTokens.spacing
                         topPadding: OmarchyTokens.compactSpacing
@@ -358,7 +360,9 @@ Item {
                     ScrollView {
                         id: responseScroll
                         Layout.fillWidth: true
-                        Layout.preferredHeight: 72
+                        Layout.minimumHeight: 72
+                        Layout.maximumHeight: 180
+                        Layout.preferredHeight: Math.max(72, Math.min(180, responseField.contentHeight))
                         ScrollBar.vertical: ScrollBar {
                             policy: ScrollBar.AsNeeded
                         }
