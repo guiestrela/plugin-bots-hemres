@@ -29,12 +29,12 @@ class ServiceContractTests(unittest.TestCase):
         self.assertIn("prompt.submit", self.service)
         self.assertIn("delegationBlocked", self.service)
 
-    def test_helper_requires_explicit_loopback_url_and_never_accepts_tokens(self):
+    def test_helper_discovers_loopback_url_and_never_accepts_tokens(self):
         self.assertIn("--url", self.helper)
         self.assertIn("validate_gateway_url", self.helper)
         self.assertIn("profiles.list", self.helper)
         self.assertIn("profiles.get_asset", self.helper)
-        self.assertIn("configuration_required", self.helper)
+        self.assertIn("local_gateway_urls", self.helper)
         self.assertNotIn("auth.json", self.helper)
         self.assertNotIn("token", self.helper.lower())
 
@@ -43,12 +43,12 @@ class ServiceContractTests(unittest.TestCase):
         self.assertIn("panelContent.service", self.bar)
         self.assertIn("selectedProfile", self.bar)
 
-    def test_panel_uses_service_state_without_enabling_delegation(self):
+    def test_panel_uses_service_state_and_enables_delegation(self):
         self.assertIn("service:", self.panel)
         self.assertIn("profiles:", self.panel)
         self.assertIn("selectedProfile", self.panel)
-        self.assertIn("enabled: false", self.panel)
-        self.assertNotIn("service.delegate", self.panel)
+        self.assertIn("enabled: true", self.panel)
+        self.assertIn("delegateRequest", self.panel)
 
 
 if __name__ == "__main__":

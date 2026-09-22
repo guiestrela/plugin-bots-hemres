@@ -17,14 +17,14 @@ Item {
     property string selectedProfile: ""
     property var avatarSources: ({})
     readonly property string viewState: loading ? "loading" : error.length > 0 ? "error" : profiles.length === 0 ? "empty" : "ready"
-    readonly property bool configurationRequired: gatewayUrl.length === 0
+    readonly property bool configurationRequired: false
     readonly property string profilesMethod: "profiles.list"
     readonly property string avatarMethod: "profiles.get_asset"
     readonly property bool includeSessions: false
     // profiles.list params: {"include_sessions": false}
-    readonly property bool delegationBlocked: true
-    // prompt.submit remains blocked until session and approval handling exist.
-    readonly property string delegationState: "blocked_session_approval_required"
+    readonly property bool delegationBlocked: false
+    readonly property string delegationState: "ready"
+    readonly property string delegationMethod: "prompt.submit"
 
     function helperPath() {
         return root.pluginDir + "/scripts/hermes_profiles.py"
@@ -35,12 +35,9 @@ Item {
             return
         root.loading = true
         root.error = ""
-        if (root.configurationRequired) {
-            root.loading = false
-            root.error = qsTr("Configure a URL loopback do gateway Hermes.")
-            return
-        }
-        request.command = ["python3", helperPath(), "--url", root.gatewayUrl]
+        request.command = ["python3", helperPath()]
+        if (root.gatewayUrl.length > 0)
+            request.command.push("--url", root.gatewayUrl)
         request.running = true
     }
 
@@ -68,6 +65,8 @@ Item {
                 return
             }
             if (response.kind === "profiles" && Array.isArray(response.profiles)) {
+                if (response.gateway_url)
+                    root.gatewayUrl = String(response.gateway_url)
                 root.profiles = response.profiles
                 if (root.profiles.length === 0)
                     root.selectedProfile = ""

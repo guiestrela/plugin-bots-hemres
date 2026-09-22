@@ -1,21 +1,20 @@
 # Hermes Bots
 
-**Hermes Bots** is an alpha Omarchy service/bar widget for a panel-only,
-read-only Hermes bot roster. It is designed for the Quickshell-based Omarchy
+**Hermes Bots** is an alpha Omarchy service/bar widget for a Hermes bot roster
+and explicit task delegation. It is designed for the Quickshell-based Omarchy
 shell and the Glass Bar ecosystem. It connects only to an explicitly configured
-local Hermes gateway and does not submit tasks yet.
+local Hermes gateway.
 
 The bar entry point opens a bot panel with loading, error, empty, roster,
-selection, and avatar-placeholder states. The read-only roster path was tested
-against a local Hermes gateway. There is no automatic gateway activation, no
-automatic task submission, and no fallback to a terminal or launcher.
+selection, avatar-placeholder, and task-submission states. There is no automatic
+gateway activation and no fallback to a terminal or launcher.
 
 ## Status
 
-**Alpha — read-only roster integrated; delegation not enabled.**
+**Alpha — live roster and one-shot task submission enabled.**
 
 The repository contains an isolated QML harness, an offline adapter fixture,
-and a live read-only WebSocket adapter. `ui/Main.qml` remains a standalone
+and a live WebSocket adapter. `ui/Main.qml` remains a standalone
 `ApplicationWindow` harness, while `BarWidget.qml` is the compact panel trigger.
 `Service.qml` invokes the allowlisted roster helper and exposes the result to
 the panel.
@@ -52,7 +51,7 @@ omarchy bar set io.github.guiestrela.hermes-bots gatewayUrl \
 ```
 
 The Hermes gateway must already be running locally; the plugin does not start
-it. Installation and configuration are not proof that delegation is enabled.
+it. The Python environment used by the widget must provide `websockets`.
 
 ## Development
 
@@ -89,7 +88,7 @@ The available real tests cover the offline adapter contract, including:
 - request envelope and size-limit validation;
 - stable bot IDs and sanitized errors;
 - duplicate request handling;
-- explicit `openChat` and `delegateTask` `unsupported` responses;
+- explicit task submission and delivery-uncertain states;
 - protection against prompt or secret leakage in responses.
 
 Passing these tests does **not** validate the Hermes RPC runtime, a live

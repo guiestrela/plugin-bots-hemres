@@ -82,14 +82,12 @@ def _http_gateway_url(ws_url: str) -> str:
 
 
 def discover_session_token(ws_url: str, timeout: float = 3.0) -> str:
-    """Read the ephemeral loopback token from the headless gateway root."""
+    """Read an optional ephemeral token from the loopback gateway root."""
     request = Request(_http_gateway_url(ws_url), headers={"Cache-Control": "no-store"})
     with urlopen(request, timeout=timeout) as response:
         body = response.read(64 * 1024).decode("utf-8", "replace")
     match = re.search(r"window\.__HERMES_SESSION_TOKEN__\s*=\s*([\"'])([^\"']+)\1", body)
-    if not match:
-        raise HermesTransportError("Hermes session token is unavailable.")
-    return match.group(2)
+    return match.group(2) if match else ""
 
 
 def _with_token(ws_url: str, token: str) -> str:
@@ -121,14 +119,6 @@ class HermesWebSocketTransport:
             self._session_token = session_token
         elif connect is None:
             self._session_token = discover_session_token(self.url, timeout=min(timeout, 3.0))
-        if connect is None:
-            try:
-                from websockets import connect as websocket_connect
-            except ImportError as exc:  # pragma: no cover - environment dependent
-                raise HermesTransportError(
-                    "WebSocket support is unavailable; install websockets to enable Hermes transport."
-                ) from exc
-            connect = websocket_connect
         self._connect = connect
 
     async def list_profiles(self) -> dict[str, Any]:
@@ -168,14 +158,22 @@ class HermesWebSocketTransport:
             raise HermesTransportError("Hermes request timed out.") from exc
         except HermesTransportError:
             raise
-        except (OSError, RuntimeError, ValueError, TypeError) as exc:
+        except Exception as exc:
             raise HermesTransportError("Hermes connection failed.") from exc
 
     async def _request_once(self, request_id: int, request: dict[str, Any]) -> Any:
         # websockets sends a complete message; newline framing is still explicit
         # because Hermes' gateway contract is JSON-RPC delimited by newline.
         wire = (json.dumps(request, separators=(",", ":"), ensure_ascii=False) + "\n")
-        async with self._connect(
+        connect = self._connect
+        if connect is None:
+            try:
+                from websockets import connect as connect
+            except ImportError as exc:  # pragma: no cover - environment dependent
+                raise HermesTransportError(
+                    "WebSocket support is unavailable; install websockets to enable Hermes transport."
+                ) from exc
+        async with connect(
             _with_token(self.url, self._session_token) if self._session_token else self.url,
             open_timeout=self.timeout,
             close_timeout=self.timeout,

@@ -2,7 +2,9 @@ import asyncio
 import json
 import unittest
 from urllib.parse import urlparse
+from unittest.mock import patch
 
+import adapter.hermes_ws
 from adapter.hermes_ws import (
     HermesWebSocketTransport,
     HermesTransportError,
@@ -61,6 +63,15 @@ class HermesWebSocketTransportTests(unittest.TestCase):
             with self.subTest(url=url):
                 with self.assertRaises(HermesTransportError):
                     validate_gateway_url(url)
+
+    def test_gateway_without_browser_token_can_use_unauthenticated_local_ws(self):
+        with patch("adapter.hermes_ws.urlopen") as open_url:
+            response = open_url.return_value.__enter__.return_value
+            response.read.return_value = b"<html><body>Hermes</body></html>"
+            self.assertEqual(
+                adapter.hermes_ws.discover_session_token("ws://127.0.0.1:8765/api/ws"),
+                "",
+            )
 
     def test_list_profiles_sends_newline_delimited_json_rpc_and_correlates_id(self):
         socket = FakeSocket([

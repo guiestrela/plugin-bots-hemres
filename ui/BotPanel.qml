@@ -251,14 +251,65 @@ Item {
         }
     }
 
+    property string pendingPayload: ""
+    property string pendingTask: ""
+
     function delegate() {
+        if (delegateRequest.running || delegationState === "running")
+            return
+        if (!gatewayUrl || !profileExists(selectedProfile) || !taskText.trim()) {
+            delegationState = "failed"
+            delegationMessage = I18n.text("Not sent: select a profile, configure the gateway and enter a task.", "Não enviado: selecione um perfil, configure o gateway e digite uma tarefa.")
+            return
+        }
+        pendingTask = taskText
+        pendingPayload = JSON.stringify({url: gatewayUrl, profile: selectedProfile, text: pendingTask}) + "\n"
         delegationState = "running"
         delegationMessage = I18n.text("Creating session and sending task…", "Criando sessão e enviando tarefa…")
+        delegateExited = false
+        delegateOutputFinished = false
+        delegateOutput = ""
+        delegateExitCode = -1
+        delegateExitStatus = -1
+        delegateRequest.stdinEnabled = true
         delegateRequest.command = [pythonExecutable, delegateFile]
         delegateRequest.running = true
     }
 
     readonly property string delegateFile: decodeURIComponent(Qt.resolvedUrl("../scripts/hermes_delegate.py").toString().replace(/^file:\/\//, ""))
+
+    property bool delegateExited: false
+    property bool delegateOutputFinished: false
+    property string delegateOutput: ""
+    property int delegateExitCode: -1
+    property int delegateExitStatus: -1
+
+    function finishDelegation() {
+        if (!delegateExited || !delegateOutputFinished || delegationState !== "running")
+            return
+        var response = null
+        try { response = JSON.parse(delegateOutput) } catch (error) {}
+        // An ACK is submission, never completion. This one-shot bridge does
+        // not subscribe to completion events, so "completed" is not accepted.
+        if (delegateExitCode === 0 && delegateExitStatus === 0 && response
+                && response.ok === true && response.state === "submitted"
+                && typeof response.session_id === "string" && response.session_id.length > 0) {
+            delegationState = "submitted"
+            delegationMessage = I18n.text("Sent to bot; completion not monitored by this panel.", "Enviado ao bot; este painel não acompanha a conclusão.")
+            if (taskText === pendingTask)
+                taskText = ""
+        } else if (delegateExitCode === 0 && delegateExitStatus === 0 && response
+                   && response.ok === false && response.state === "failed") {
+            delegationState = "failed"
+            delegationMessage = I18n.text("Task was not accepted. Check the gateway and profile before retrying.", "Tarefa não aceita. Verifique o gateway e o perfil antes de tentar novamente.")
+        } else {
+            delegationState = "delivery-uncertain"
+            delegationMessage = I18n.text("Delivery not confirmed. Check Hermes before resending to avoid duplicates.", "Entrega não confirmada. Confira no Hermes antes de reenviar para evitar duplicatas.")
+        }
+        pendingTask = ""
+        pendingPayload = ""
+        delegateOutput = ""
+    }
 
     Process {
         id: delegateRequest
@@ -266,24 +317,22 @@ Item {
         stdout: StdioCollector {
             waitForEnd: true
             onStreamFinished: {
-                try {
-                    var response = JSON.parse(text)
-                    delegationState = response.ok ? "submitted" : "error"
-                    delegationMessage = response.ok
-                        ? I18n.text("Sent to bot; completion not yet confirmed.", "Enviado ao bot; conclusão ainda não confirmada.")
-                        : I18n.text("Not sent: " + response.error, "Não enviado: " + response.error)
-                    if (response.ok)
-                        taskText = ""
-                } catch (error) {
-                    delegationState = "error"
-                    delegationMessage = I18n.text("Invalid delegation response.", "Resposta de delegação inválida.")
-                }
+                panel.delegateOutput = text
+                panel.delegateOutputFinished = true
+                panel.finishDelegation()
             }
         }
-        onStarted: write(JSON.stringify({url: panel.gatewayUrl, profile: panel.selectedProfile, text: panel.taskText}) + "\n")
-        onExited: if (exitCode !== 0 && panel.delegationState === "running") {
-            panel.delegationState = "error"
-            panel.delegationMessage = I18n.text("Gateway unavailable.", "Gateway indisponível.")
+        onStarted: {
+            delegateRequest.write(panel.pendingPayload)
+            // QProcess drains queued bytes before closing the write channel.
+            delegateRequest.stdinEnabled = false
+            panel.pendingPayload = ""
+        }
+        onExited: function(exitCode, exitStatus) {
+            panel.delegateExitCode = exitCode
+            panel.delegateExitStatus = exitStatus
+            panel.delegateExited = true
+            panel.finishDelegation()
         }
     }
 }

@@ -31,11 +31,13 @@ BarWidget {
     }
 
     function refreshRoster() {
-        if (rosterLoading || !gatewayUrl)
+        if (rosterLoading)
             return
         rosterLoading = true
         rosterError = ""
-        rosterRequest.command = [pythonExecutable, helperFile, "--url", gatewayUrl]
+        rosterRequest.command = [pythonExecutable, helperFile]
+        if (gatewayUrl.length > 0)
+            rosterRequest.command.push("--url", gatewayUrl)
         rosterRequest.running = true
     }
 
@@ -52,6 +54,8 @@ BarWidget {
                 return
             }
             if (response.kind === "profiles" && Array.isArray(response.profiles)) {
+                if (response.gateway_url)
+                    gatewayUrl = String(response.gateway_url)
                 rosterProfiles = response.profiles
                 if (rosterProfiles.length > 0)
                     selectedProfile = String(rosterProfiles[0].name || rosterProfiles[0].id || "")
@@ -87,7 +91,7 @@ BarWidget {
         bar: root.bar
         text: ""
         hasVisualContent: true
-        fixedWidth: 27
+        fixedWidth: 24
         labelVisible: false
         tooltipText: root.tooltipText
         onPressed: function(buttonCode) {
@@ -97,8 +101,8 @@ BarWidget {
 
         Avatar {
             anchors.centerIn: parent
-            width: 20
-            height: 20
+            width: 18
+            height: 18
             shape: "squircle"
             outlined: true
             fill: root.bar ? root.bar.barForeground : "#cdd6f4"
