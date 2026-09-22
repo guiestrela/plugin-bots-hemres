@@ -17,6 +17,7 @@ Item {
     property string pythonExecutable: "/home/guiestrela/.hermes/hermes-agent/venv/bin/python3"
     property string delegationState: "idle"
     property string delegationMessage: ""
+    signal refreshRequested()
     property string taskText: ""
 
     implicitWidth: 360
@@ -118,15 +119,24 @@ Item {
         anchors.margins: OmarchyTokens.spacing
         spacing: OmarchyTokens.compactSpacing
 
-        Label {
-            text: I18n.text("Hermes Bots", "Bots Hermes")
-            textFormat: Text.PlainText
-            color: OmarchyTokens.text
-            font.bold: true
-            font.pixelSize: 18
+        RowLayout {
             Layout.fillWidth: true
-            Accessible.role: Accessible.Heading
-            Accessible.name: text
+            Label {
+                text: I18n.text("Hermes Bots", "Bots Hermes")
+                textFormat: Text.PlainText
+                color: OmarchyTokens.text
+                font.bold: true
+                font.pixelSize: 18
+                Layout.fillWidth: true
+                Accessible.role: Accessible.Heading
+                Accessible.name: text
+            }
+            Button {
+                text: I18n.text("Refresh", "Atualizar")
+                enabled: panel.viewState !== "loading"
+                onClicked: panel.refreshRequested()
+                Accessible.name: I18n.text("Refresh bot list", "Atualizar lista de bots")
+            }
         }
         Label {
             text: panel.viewState === "loading" ? I18n.text("Loading profiles…", "Carregando perfis…")
@@ -254,8 +264,8 @@ Item {
                     var response = JSON.parse(text)
                     delegationState = response.ok ? "submitted" : "error"
                     delegationMessage = response.ok
-                        ? I18n.text("Task submitted.", "Tarefa enviada.")
-                        : I18n.text("Delegation failed: " + response.error, "Falha na delegação: " + response.error)
+                        ? I18n.text("Sent to bot; completion not yet confirmed.", "Enviado ao bot; conclusão ainda não confirmada.")
+                        : I18n.text("Not sent: " + response.error, "Não enviado: " + response.error)
                     if (response.ok)
                         taskText = ""
                 } catch (error) {

@@ -136,8 +136,8 @@ BarWidget {
         owner: root
         open: root.panelOpen
         padding: 0
-        contentWidth: fittedContentWidth(360)
-        contentHeight: fittedContentHeight(panelContent.implicitHeight, 560)
+        contentWidth: fittedContentWidth(440)
+        contentHeight: fittedContentHeight(panelContent.implicitHeight, 620)
 
         BotPanel {
             id: panelContent
@@ -151,6 +151,7 @@ BarWidget {
             errorMessage: root.adapterError
             gatewayUrl: root.gatewayUrl
             pythonExecutable: root.pythonExecutable
+            onRefreshRequested: root.refreshRoster()
         }
     }
 }
