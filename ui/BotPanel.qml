@@ -70,7 +70,7 @@ Item {
     }
 
     implicitWidth: 360
-    implicitHeight: 560
+    implicitHeight: selectedProfile.length > 0 ? 560 : 520
 
     function profileValue(profile, snake, camel, fallback) {
         if (!profile)
@@ -237,6 +237,8 @@ Item {
             visible: panel.viewState === "loading"
             running: visible
             Layout.preferredHeight: visible ? implicitHeight : 0
+            Layout.minimumHeight: 0
+            Layout.maximumHeight: visible ? implicitHeight : 0
             Layout.alignment: Qt.AlignHCenter
             Accessible.name: I18n.text("Loading profiles", "Carregando perfis")
         }
@@ -246,6 +248,8 @@ Item {
             textFormat: Text.PlainText
             color: OmarchyTokens.mutedText
             Layout.preferredHeight: visible ? implicitHeight : 0
+            Layout.minimumHeight: 0
+            Layout.maximumHeight: visible ? implicitHeight : 0
             Layout.alignment: Qt.AlignHCenter
             Accessible.name: text
         }
