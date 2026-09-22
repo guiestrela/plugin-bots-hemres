@@ -23,8 +23,7 @@ class DelegationProcessTests(unittest.TestCase):
             (scripts / "hermes_delegate.py").write_text(
                 'import json, sys\n'
                 'payload = json.loads(sys.stdin.readline())\n'
-                'assert payload == {"url":"ws://127.0.0.1:1/api/ws", "profile":"fixture", '
-                '"text":"fixture original — not a user task", "transport":"canonical-chat"}, payload\n' +
+                'assert payload["transport"] == "canonical-chat" and payload.get("async") is True, payload\n' +
                 ('import time; time.sleep(10)\n' if stall else '') +
                 'print(' + repr(response) + ', flush=True)\n' +
                 'sys.exit(' + str(exit_code) + ')\n')

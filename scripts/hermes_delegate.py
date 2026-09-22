@@ -3,6 +3,7 @@
 from __future__ import annotations
 import asyncio
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -148,8 +149,8 @@ class HermesWebSocketTransport(_BaseTransport):
 
 
 
-def run_canonical_chat(profile: str, text: str) -> dict[str, Any]:
-    """Use Hermes' canonical Bot Chat, matching the Desktop Bot Mode path."""
+def run_canonical_chat(profile: str, text: str, asynchronous: bool = False) -> dict[str, Any]:
+    """Use Hermes' canonical Bot Chat, optionally returning after launch."""
     fd, query_path = tempfile.mkstemp(prefix="hermes-bots-", suffix=".txt")
     try:
         with open(fd, "w", encoding="utf-8", closefd=True) as stream:
@@ -160,6 +161,16 @@ def run_canonical_chat(profile: str, text: str) -> dict[str, Any]:
             command += ["-p", profile]
         command += ["chat", "--in", str(Path.home()), "-c", "Bot Chat",
                     "--create-if-missing", "-Q", "--query-file", query_path]
+        if asynchronous:
+            result_fd, result_path = tempfile.mkstemp(prefix="hermes-bots-result-", suffix=".json")
+            os.close(result_fd)
+            Path(result_path).unlink(missing_ok=True)
+            os_cmd = [sys.executable, str(Path(__file__).resolve()), "--canonical-worker",
+                      profile, query_path, result_path]
+            subprocess.Popen(os_cmd, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                             stderr=subprocess.DEVNULL, start_new_session=True,
+                             close_fds=True)
+            return {"ok": True, "state": "submitted", "poll_path": result_path}
         completed = subprocess.run(command, capture_output=True, text=True,
                                    timeout=120, cwd=str(Path.home()))
         output = (completed.stdout or "").strip()
@@ -174,12 +185,37 @@ def run_canonical_chat(profile: str, text: str) -> dict[str, Any]:
     except (OSError, ValueError):
         return {"ok": False, "state": "failed", "error": "bot_unavailable"}
     finally:
-        try:
-            Path(query_path).unlink()
-        except OSError:
-            pass
+        if not asynchronous:
+            try:
+                Path(query_path).unlink()
+            except OSError:
+                pass
 
 
+def run_canonical_worker(profile: str, query_path: str, result_path: str) -> int:
+    try:
+        text = Path(query_path).read_text(encoding="utf-8")
+        result = run_canonical_chat(profile, text, asynchronous=False)
+    except (OSError, ValueError) as exc:
+        result = {"ok": False, "state": "failed", "error": "bot_unavailable"}
+    Path(result_path).write_text(json.dumps(result, ensure_ascii=False), encoding="utf-8")
+    try:
+        Path(query_path).unlink()
+    except OSError:
+        pass
+    return 0
+
+
+def poll_canonical_result(result_path: str) -> dict[str, Any]:
+    path = Path(result_path)
+    if not path.is_file():
+        return {"ok": True, "state": "pending"}
+    try:
+        result = json.loads(path.read_text(encoding="utf-8"))
+        path.unlink(missing_ok=True)
+        return result if isinstance(result, dict) else {"ok": False, "state": "failed", "error": "invalid_result"}
+    except (OSError, json.JSONDecodeError):
+        return {"ok": False, "state": "failed", "error": "invalid_result"}
 async def run(payload: Any) -> dict[str, Any]:
     invalid = {"ok": False, "state": "failed", "error": "invalid_request"}
     if not isinstance(payload, dict):
@@ -195,7 +231,7 @@ async def run(payload: Any) -> dict[str, Any]:
     except (HermesTransportError, ValueError):
         return invalid
     if canonical:
-        return run_canonical_chat(profile, text)
+        return run_canonical_chat(profile, text, asynchronous=payload.get("async") is True)
     try:
         transport = HermesWebSocketTransport(url)
         if payload.get("wait_for_completion") is True:
@@ -224,6 +260,11 @@ async def run(payload: Any) -> dict[str, Any]:
         return {"ok": False, "state": state, "error": "gateway_unavailable", **locals().get("ids", {})}
 
 def main() -> int:
+    if len(sys.argv) == 5 and sys.argv[1] == "--canonical-worker":
+        return run_canonical_worker(sys.argv[2], sys.argv[3], sys.argv[4])
+    if len(sys.argv) == 3 and sys.argv[1] == "--poll":
+        print(json.dumps(poll_canonical_result(sys.argv[2]), ensure_ascii=False, separators=(",", ":")))
+        return 0
     try:
         payload = json.loads(sys.stdin.readline())
         result = asyncio.run(run(payload))

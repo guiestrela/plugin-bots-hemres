@@ -407,6 +407,7 @@ Item {
 
     property string pendingPayload: ""
     property string pendingTask: ""
+    property string pollPath: ""
 
     function delegate() {
         if (delegateRequest.running || delegationState === "running")
@@ -421,7 +422,7 @@ Item {
         pendingTask = task
         pendingProfile = profile
         pendingPayload = JSON.stringify({url: gatewayUrl, profile: profile, text: pendingTask,
-            transport: "canonical-chat"}) + "\n"
+            transport: "canonical-chat", async: true}) + "\n"
         delegationState = "running"
         delegationMessage = I18n.text("Creating session and sending task…", "Criando sessão e enviando tarefa…")
         delegateExited = false
@@ -453,6 +454,15 @@ Item {
         delegationWatchdog.stop()
         var response = null
         try { response = JSON.parse(delegateOutput) } catch (error) {}
+        if (response && response.ok === true && response.state === "submitted" && response.poll_path) {
+            pollPath = String(response.poll_path)
+            delegationMessage = I18n.text("Task sent by the plugin; waiting for bot response…", "Tarefa enviada pelo plugin; aguardando retorno do bot…")
+            delegationState = "running"
+            delegationWatchdog.restart()
+            pollTimer.restart()
+            delegateOutput = ""
+            return
+        }
         if (delegateExitCode === 0 && delegateExitStatus === 0 && response
                 && response.ok === true && (response.state === "completed" || response.state === "submitted")) {
             delegationState = response.state
@@ -501,6 +511,40 @@ Item {
             pendingPayload = ""
             delegateOutput = ""
             delegateRequest.running = false
+        }
+    }
+
+    Timer {
+        id: pollTimer
+        interval: 700
+        repeat: true
+        onTriggered: {
+            if (pollPath.length === 0 || pollRequest.running)
+                return
+            pollRequest.command = [pythonExecutable, delegateFile, "--poll", pollPath]
+            pollRequest.running = true
+        }
+    }
+
+    Process {
+        id: pollRequest
+        command: []
+        stdout: StdioCollector {
+            waitForEnd: true
+            onStreamFinished: {
+                var result = {}
+                try { result = JSON.parse(text) } catch (error) { return }
+                if (result.state === "pending")
+                    return
+                pollTimer.stop()
+                panel.pollPath = ""
+                panel.delegateOutput = JSON.stringify(result)
+                panel.delegateExitCode = 0
+                panel.delegateExitStatus = 0
+                panel.delegateExited = true
+                panel.delegateOutputFinished = true
+                panel.finishDelegation()
+            }
         }
     }
 
