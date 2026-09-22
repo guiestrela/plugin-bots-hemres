@@ -85,8 +85,12 @@ async def run(payload: Any) -> dict[str, Any]:
         if _valid_id(created.get("stored_session_id")):
             ids["stored_session_id"] = created["stored_session_id"]
         submitted = await transport.request("prompt.submit", {"session_id": session_id, "text": text})
-        if not isinstance(submitted, dict) or submitted.get("status") != "streaming":
+        if not isinstance(submitted, dict) or not (
+                submitted.get("status") == "streaming"
+                or _valid_id(submitted.get("task_id"))):
             return {"ok": False, "state": "delivery-uncertain", "error": "invalid_submit_response", **ids}
+        if _valid_id(submitted.get("task_id")):
+            ids["task_id"] = submitted["task_id"]
         return {"ok": True, "state": "submitted", **ids}
     except RpcRejected:
         return {"ok": False, "state": "failed", "error": "rpc_rejected", **locals().get("ids", {})}

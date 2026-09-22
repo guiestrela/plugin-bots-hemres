@@ -20,6 +20,10 @@ Item {
     signal refreshRequested()
     property string taskText: ""
 
+    function focusTaskInput() {
+        taskInput.forceActiveFocus()
+    }
+
     implicitWidth: 360
     implicitHeight: 560
 
@@ -103,6 +107,12 @@ Item {
         return false
     }
 
+    function delegationProfile() {
+        if (selectedProfile.length > 0 && profileExists(selectedProfile))
+            return selectedProfile
+        return profileModel.count > 0 ? profileModel.get(0).profileName : ""
+    }
+
     onProfilesChanged: rebuildProfiles()
     Component.onCompleted: rebuildProfiles()
 
@@ -172,7 +182,7 @@ Item {
             model: profileModel
             clip: true
             spacing: OmarchyTokens.compactSpacing
-            focus: true
+            focus: false
             keyNavigationEnabled: true
             Layout.fillWidth: true
             // Reserve complete rows; larger rosters scroll in a bounded area.
@@ -218,8 +228,11 @@ Item {
                 anchors.top: parent.top
                 anchors.bottom: parent.bottom
                 TextArea {
+                    id: taskInput
                     text: panel.taskText
                     onTextChanged: panel.taskText = text
+                    focus: true
+                    activeFocusOnPress: true
                     placeholderText: I18n.text("Describe the task…", "Descreva a tarefa…")
                     readOnly: false
                     enabled: true
@@ -233,8 +246,7 @@ Item {
                     text: panel.delegationState === "running"
                           ? I18n.text("Sending…", "Enviando…")
                           : I18n.text("Delegate", "Delegar")
-                    enabled: panel.selectedProfile.length > 0 && panel.taskText.trim().length > 0
-                              && panel.delegationState !== "running"
+                    enabled: panel.delegationState !== "running"
                     Accessible.name: I18n.text("Delegate task", "Delegar tarefa")
                     Layout.alignment: Qt.AlignRight
                     onClicked: panel.delegate()
@@ -257,13 +269,15 @@ Item {
     function delegate() {
         if (delegateRequest.running || delegationState === "running")
             return
-        if (!gatewayUrl || !profileExists(selectedProfile) || !taskText.trim()) {
+        var profile = delegationProfile()
+        var task = taskInput.text.trim()
+        if (!gatewayUrl || !profile || !task) {
             delegationState = "failed"
             delegationMessage = I18n.text("Not sent: select a profile, configure the gateway and enter a task.", "Não enviado: selecione um perfil, configure o gateway e digite uma tarefa.")
             return
         }
-        pendingTask = taskText
-        pendingPayload = JSON.stringify({url: gatewayUrl, profile: selectedProfile, text: pendingTask}) + "\n"
+        pendingTask = task
+        pendingPayload = JSON.stringify({url: gatewayUrl, profile: profile, text: pendingTask}) + "\n"
         delegationState = "running"
         delegationMessage = I18n.text("Creating session and sending task…", "Criando sessão e enviando tarefa…")
         delegateExited = false

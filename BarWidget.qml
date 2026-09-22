@@ -81,6 +81,8 @@ BarWidget {
     onPanelOpenChanged: {
         if (panelOpen && (rosterProfiles.length === 0 || rosterError.length > 0))
             refreshRoster()
+        if (panelOpen)
+            Qt.callLater(function() { panelContent.focusTaskInput() })
     }
 
     implicitWidth: button.implicitWidth
