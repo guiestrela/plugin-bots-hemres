@@ -223,6 +223,7 @@ Item {
         BusyIndicator {
             visible: panel.viewState === "loading"
             running: visible
+            Layout.preferredHeight: visible ? implicitHeight : 0
             Layout.alignment: Qt.AlignHCenter
             Accessible.name: I18n.text("Loading profiles", "Carregando perfis")
         }
@@ -231,6 +232,7 @@ Item {
             text: I18n.text("The adapter returned an empty list.", "O adaptador retornou uma lista vazia.")
             textFormat: Text.PlainText
             color: OmarchyTokens.mutedText
+            Layout.preferredHeight: visible ? implicitHeight : 0
             Layout.alignment: Qt.AlignHCenter
             Accessible.name: text
         }
