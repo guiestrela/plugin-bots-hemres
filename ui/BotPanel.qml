@@ -96,8 +96,23 @@ Item {
         var value = String(shape || "")
         if (value.indexOf("::") >= 0)
             value = value.split("::").pop()
-        var allowed = ["squircle", "circle", "hex", "cloud", "teardrop", "tablet", "blob"]
+        var aliases = {hexagon: "hex", blobatar: "blob"}
+        if (aliases[value])
+            value = aliases[value]
+        var allowed = ["circle", "egg", "capsule", "cylinder", "tablet", "squircle", "hex",
+                       "gem", "crystal", "wedge", "shield", "dome", "arch", "bean", "pebble",
+                       "cloud", "teardrop", "leaf", "group", "blob"]
         return allowed.indexOf(value) >= 0 ? value : fallbackAvatarShape(index)
+    }
+
+    function metadataAvatar(profile, index) {
+        var meta = profile && profile.ui_meta && profile.ui_meta["hermes-bots"]
+        if (meta && meta.custom === true && meta.shape)
+            return {
+                shape: normalizedAvatarShape(meta.shape, index),
+                color: String(meta.color || fallbackAvatarColor(index))
+            }
+        return null
     }
 
     function displayNameFor(profile, fallback) {
@@ -108,6 +123,9 @@ Item {
     }
 
     function referenceAvatar(profile, index) {
+        var fromHermes = metadataAvatar(profile, index)
+        if (fromHermes)
+            return fromHermes
         var name = String(profileValue(profile, "name", "id", "")).toLowerCase()
         var styles = {
             "default": {shape: "tablet", color: "#8f4ee8"},
