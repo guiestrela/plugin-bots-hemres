@@ -189,7 +189,25 @@ ShellRoot {
                         && responseField.contentHeight > responseScroller.height
                         && responseBar.size < 1,
                         "long bot completion is displayed in a scrollable response field");
-                });
+                    harness.panel.setResponse("synthetic-e", "OTHER PROFILE RESPONSE");
+                    var clearResponseButton = completionControls.find(o => o.visible && o.text !== undefined
+                        && (String(o.text) === "Clear" || String(o.text) === "Limpar")
+                        && typeof o.clicked === "function");
+                    harness.check(clearResponseButton && clearResponseButton.enabled
+                        && (String(clearResponseButton.Accessible.name).toLowerCase().indexOf("response") >= 0
+                            || String(clearResponseButton.Accessible.name).toLowerCase().indexOf("resposta") >= 0),
+                        "response clear button is visible, enabled, and accessible");
+                    harness.panel.pendingProfile = "synthetic-f";
+                    harness.panel.delegationState = "running";
+                    harness.check(clearResponseButton && !clearResponseButton.enabled,
+                        "response clear button is disabled while that profile is submitting");
+                    harness.panel.delegationState = "completed";
+                    if (clearResponseButton)
+                        clearResponseButton.clicked();
+                    harness.check(harness.panel.responseFor("synthetic-f") === ""
+                        && harness.panel.responseFor("synthetic-e") === "OTHER PROFILE RESPONSE",
+                        "clearing selected response preserves other profiles");
+                    });
             } else {
                 console.log("PBH_RESULT " + harness.failures);
                 Qt.quit();

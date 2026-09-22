@@ -419,50 +419,88 @@ Item {
                         }
                         Accessible.name: I18n.text("Task for %1", "Tarefa para %1").arg(model.displayName)
                     }
-                    Item {
-                        id: responseViewport
+                    RowLayout {
+                        id: responseRow
                         visible: panel.selectedProfile === model.profileName
                                  && panel.responseFor(model.profileName).length > 0
-                        clip: true
-                        implicitHeight: visible ? 112 : 0
                         Layout.fillWidth: true
-                        Layout.minimumHeight: visible ? 112 : 0
-                        Layout.maximumHeight: visible ? 112 : 0
-                        Layout.preferredHeight: visible ? 112 : 0
-                        ScrollView {
-                            id: responseScroll
-                            property bool botResponseScroller: true
-                            anchors.fill: parent
+                        spacing: OmarchyTokens.compactSpacing
+                        Item {
+                            id: responseViewport
+                            property bool botResponseViewport: true
                             clip: true
-                            ScrollBar.vertical: ScrollBar {
-                                property bool botVerticalResponseBar: true
-                                policy: ScrollBar.AsNeeded
-                            }
-                            TextArea {
-                                id: responseField
-                                width: responseViewport.width
-                                height: Math.max(responseViewport.height, responseField.contentHeight)
-                                text: panel.responseFor(model.profileName)
-                                placeholderText: I18n.text("Bot response", "Resposta do bot")
-                                readOnly: true
-                                wrapMode: TextArea.Wrap
-                                textFormat: TextEdit.PlainText
-                                font.family: OmarchyTokens.fontFamily
-                                font.pixelSize: OmarchyTokens.fontBodySmall
-                                leftPadding: OmarchyTokens.spacing
-                                rightPadding: OmarchyTokens.spacing
-                                topPadding: OmarchyTokens.compactSpacing
-                                bottomPadding: OmarchyTokens.compactSpacing
-                                background: BorderSurface {
-                                    radius: Style.cornerRadius
-                                    color: Style.controlFill(responseField.activeFocus, responseField.hovered,
-                                                              Color.popups.text, Color.accent)
-                                    borderSpec: Border.controlSpec(responseField.activeFocus ? "focus"
-                                                                   : (responseField.hovered ? "hover-cursor" : "normal"),
-                                                                   Color.popups.text, Color.accent)
+                            implicitHeight: 112
+                            Layout.fillWidth: true
+                            Layout.minimumHeight: 112
+                            Layout.maximumHeight: 112
+                            Layout.preferredHeight: 112
+                            ScrollView {
+                                id: responseScroll
+                                property bool botResponseScroller: true
+                                anchors.fill: parent
+                                clip: true
+                                ScrollBar.vertical: ScrollBar {
+                                    property bool botVerticalResponseBar: true
+                                    policy: ScrollBar.AsNeeded
                                 }
-                                Accessible.name: I18n.text("Response from %1", "Resposta de %1").arg(model.displayName)
+                                TextArea {
+                                    id: responseField
+                                    width: responseViewport.width
+                                    height: Math.max(responseViewport.height, responseField.contentHeight)
+                                    text: panel.responseFor(model.profileName)
+                                    placeholderText: I18n.text("Bot response", "Resposta do bot")
+                                    readOnly: true
+                                    wrapMode: TextArea.Wrap
+                                    textFormat: TextEdit.PlainText
+                                    font.family: OmarchyTokens.fontFamily
+                                    font.pixelSize: OmarchyTokens.fontBodySmall
+                                    leftPadding: OmarchyTokens.spacing
+                                    rightPadding: OmarchyTokens.spacing
+                                    topPadding: OmarchyTokens.compactSpacing
+                                    bottomPadding: OmarchyTokens.compactSpacing
+                                    background: BorderSurface {
+                                        radius: Style.cornerRadius
+                                        color: Style.controlFill(responseField.activeFocus, responseField.hovered,
+                                                                  Color.popups.text, Color.accent)
+                                        borderSpec: Border.controlSpec(responseField.activeFocus ? "focus"
+                                                                       : (responseField.hovered ? "hover-cursor" : "normal"),
+                                                                       Color.popups.text, Color.accent)
+                                    }
+                                    Accessible.name: I18n.text("Response from %1", "Resposta de %1").arg(model.displayName)
+                                }
                             }
+                        }
+                        BorderSurface {
+                            id: clearResponseButton
+                            property string text: I18n.text("Clear", "Limpar")
+                            property bool isHovered: clearResponseMouse.containsMouse
+                            property bool isPressed: clearResponseMouse.pressed
+                            signal clicked()
+                            enabled: !(panel.delegationState === "running" && panel.pendingProfile === model.profileName)
+                            implicitWidth: clearResponseLabel.implicitWidth + Style.spacing.controlPaddingX * 2
+                            implicitHeight: Style.spacing.controlHeight
+                            radius: Style.cornerRadius
+                            color: Style.controlFill(activeFocus, isHovered || isPressed, Color.popups.text, Color.accent)
+                            borderSpec: Border.controlSpec(activeFocus ? "focus" : (isHovered || isPressed ? "hover-cursor" : "normal"), Color.popups.text, Color.accent)
+                            Text {
+                                id: clearResponseLabel
+                                anchors.centerIn: parent
+                                text: clearResponseButton.text
+                                color: Color.popups.text
+                                font.family: Style.font.family
+                                font.pixelSize: Style.font.body
+                            }
+                            MouseArea {
+                                id: clearResponseMouse
+                                anchors.fill: parent
+                                enabled: clearResponseButton.enabled
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: clearResponseButton.clicked()
+                            }
+                            Accessible.role: Accessible.Button
+                            Accessible.name: I18n.text("Clear response", "Limpar resposta")
+                            onClicked: panel.clearResponse(model.profileName)
                         }
                     }
                     RowLayout {
