@@ -52,6 +52,19 @@ Item {
         botResponses = next
     }
 
+    function clearResponse(profile) {
+        if (!profile)
+            return
+        var next = Object.assign({}, botResponses)
+        delete next[profile]
+        botResponses = next
+        if (pendingProfile === profile && delegationState !== "running") {
+            delegationMessage = ""
+            pendingProfile = ""
+            delegationState = "idle"
+        }
+    }
+
     function focusTaskInput() {
         // The task editor is owned by the selected ListView delegate.
     }
@@ -354,6 +367,9 @@ Item {
                         }
                         Accessible.name: I18n.text("Response from %1", "Retorno de %1").arg(model.displayName)
                     }
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: OmarchyTokens.compactSpacing
                     BorderSurface {
                         id: delegateButton
                         property string text: panel.delegationState === "running" && panel.pendingProfile === model.profileName
@@ -391,6 +407,42 @@ Item {
                             panel.selectedProfile = model.profileName
                             panel.delegate()
                         }
+                    }
+                    BorderSurface {
+                        id: clearResponseButton
+                        property bool isHovered: clearResponseMouse.containsMouse
+                        property bool isPressed: clearResponseMouse.pressed
+                        property string text: I18n.text("Clear", "Limpar")
+                        visible: panel.responseFor(model.profileName).length > 0
+                                  || (panel.pendingProfile === model.profileName && panel.delegationMessage.length > 0)
+                        enabled: panel.delegationState !== "running"
+                        implicitWidth: clearResponseLabel.implicitWidth + Style.spacing.controlPaddingX * 2
+                        implicitHeight: Style.spacing.controlHeight
+                        radius: Style.cornerRadius
+                        color: Style.controlFill(activeFocus, isHovered || isPressed, Color.popups.text, Color.accent)
+                        borderSpec: Border.controlSpec(activeFocus ? "focus" : (isHovered || isPressed ? "hover-cursor" : "normal"), Color.popups.text, Color.accent)
+                        Text {
+                            id: clearResponseLabel
+                            anchors.centerIn: parent
+                            text: clearResponseButton.text
+                            color: Color.popups.text
+                            font.family: Style.font.family
+                            font.pixelSize: Style.font.body
+                        }
+                        MouseArea {
+                            id: clearResponseMouse
+                            anchors.fill: parent
+                            enabled: clearResponseButton.enabled
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: clearResponseButton.clicked()
+                        }
+                        signal clicked()
+                        Accessible.role: Accessible.Button
+                        Accessible.name: I18n.text("Clear bot response for %1", "Limpar retorno do bot %1").arg(model.displayName)
+                        Layout.alignment: Qt.AlignRight
+                        onClicked: panel.clearResponse(model.profileName)
+                    }
                     }
                     Label {
                         text: panel.delegationMessage
