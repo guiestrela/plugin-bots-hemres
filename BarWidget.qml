@@ -86,6 +86,8 @@ BarWidget {
         id: button
         bar: root.bar
         text: ""
+        hasVisualContent: true
+        fixedWidth: 27
         labelVisible: false
         tooltipText: root.tooltipText
         onPressed: function(buttonCode) {
