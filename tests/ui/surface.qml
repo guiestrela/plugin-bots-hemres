@@ -103,7 +103,7 @@ ShellRoot {
                 harness.check(harness.panel.delegationState === "idle", "delegation starts idle");
                 rowControls[2].clicked();
                 harness.check(harness.panel.selectedEditorHeight > 0,
-                    "selected editor reserves input and response space");
+                    "selected editor reserves task input space");
                 Qt.callLater(function() {
                     harness.check(harness.list.height > harness.panel.rosterHeight,
                         "list reserves space below the last bot for the editor");
@@ -159,8 +159,11 @@ ShellRoot {
                     && harness.panel.delegationMessage.length > 0,
                     "empty-gateway environment resolves to failed with visible message");
             } else if (harness.phase === 7) {
-                var syntheticCompletion = "SYNTHETIC FULL BOT RESPONSE — must remain internal";
+                var syntheticCompletion = "";
+                for (var i = 0; i < 40; i++)
+                    syntheticCompletion += "SYNTHETIC FULL BOT RESPONSE — must remain internal. ";
                 harness.panel.pendingProfile = "synthetic-f";
+                harness.panel.selectedProfile = "synthetic-f";
                 harness.panel.pendingTask = "synthetic task";
                 harness.panel.delegationState = "running";
                 harness.panel.delegateExited = true;
@@ -173,6 +176,20 @@ ShellRoot {
                     "full bot response is not rendered as delegation status");
                 harness.check(harness.panel.responseFor("synthetic-f") === syntheticCompletion,
                     "full bot response remains available in internal per-profile state");
+                Qt.callLater(function() {
+                    var completionControls = harness.objects(harness.panel);
+                    var responseScroller = completionControls.find(o => o.botResponseScroller === true && o.visible);
+                    var responseBar = completionControls.find(o => o.botVerticalResponseBar === true && o.visible);
+                    var responseField = completionControls.find(o => o.visible && o.placeholderText !== undefined
+                        && (String(o.placeholderText).indexOf("Bot response") >= 0
+                            || String(o.placeholderText).indexOf("Resposta do bot") >= 0));
+                    harness.check(responseScroller && responseBar && responseField
+                        && responseField.text === syntheticCompletion
+                        && Math.round(responseScroller.height) === 112
+                        && responseField.contentHeight > responseScroller.height
+                        && responseBar.size < 1,
+                        "long bot completion is displayed in a scrollable response field");
+                });
             } else {
                 console.log("PBH_RESULT " + harness.failures);
                 Qt.quit();

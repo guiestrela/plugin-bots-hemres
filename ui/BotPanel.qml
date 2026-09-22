@@ -74,7 +74,8 @@ Item {
         : 0
 
     property real selectedEditorHeight: selectedProfile.length > 0
-        ? 58 + Style.spacing.controlHeight + OmarchyTokens.compactSpacing * 2
+        ? 58 + (responseFor(selectedProfile).length > 0 ? 112 : 0)
+            + Style.spacing.controlHeight + OmarchyTokens.compactSpacing * 4
         : 0
     property real layoutHeight: content.implicitHeight
 
@@ -417,6 +418,52 @@ Item {
                             }
                         }
                         Accessible.name: I18n.text("Task for %1", "Tarefa para %1").arg(model.displayName)
+                    }
+                    Item {
+                        id: responseViewport
+                        visible: panel.selectedProfile === model.profileName
+                                 && panel.responseFor(model.profileName).length > 0
+                        clip: true
+                        implicitHeight: visible ? 112 : 0
+                        Layout.fillWidth: true
+                        Layout.minimumHeight: visible ? 112 : 0
+                        Layout.maximumHeight: visible ? 112 : 0
+                        Layout.preferredHeight: visible ? 112 : 0
+                        ScrollView {
+                            id: responseScroll
+                            property bool botResponseScroller: true
+                            anchors.fill: parent
+                            clip: true
+                            ScrollBar.vertical: ScrollBar {
+                                property bool botVerticalResponseBar: true
+                                policy: ScrollBar.AsNeeded
+                            }
+                            TextArea {
+                                id: responseField
+                                width: responseViewport.width
+                                height: Math.max(responseViewport.height, responseField.contentHeight)
+                                text: panel.responseFor(model.profileName)
+                                placeholderText: I18n.text("Bot response", "Resposta do bot")
+                                readOnly: true
+                                wrapMode: TextArea.Wrap
+                                textFormat: TextEdit.PlainText
+                                font.family: OmarchyTokens.fontFamily
+                                font.pixelSize: OmarchyTokens.fontBodySmall
+                                leftPadding: OmarchyTokens.spacing
+                                rightPadding: OmarchyTokens.spacing
+                                topPadding: OmarchyTokens.compactSpacing
+                                bottomPadding: OmarchyTokens.compactSpacing
+                                background: BorderSurface {
+                                    radius: Style.cornerRadius
+                                    color: Style.controlFill(responseField.activeFocus, responseField.hovered,
+                                                              Color.popups.text, Color.accent)
+                                    borderSpec: Border.controlSpec(responseField.activeFocus ? "focus"
+                                                                   : (responseField.hovered ? "hover-cursor" : "normal"),
+                                                                   Color.popups.text, Color.accent)
+                                }
+                                Accessible.name: I18n.text("Response from %1", "Resposta de %1").arg(model.displayName)
+                            }
+                        }
                     }
                     RowLayout {
                         Layout.fillWidth: true
