@@ -65,7 +65,9 @@ class QmlHarnessContractTests(unittest.TestCase):
     def test_bar_widget_is_interactive_and_uses_bot_icon(self):
         self.assertNotIn('text: qsTr("HB")', BAR)
         self.assertNotIn('text: "♟"', BAR)
-        self.assertIn('source: Qt.resolvedUrl("assets/rakabot-bar.svg")', BAR)
+        self.assertIn("Avatar {", BAR)
+        self.assertIn('shape: "squircle"', BAR)
+        self.assertIn("outlined: true", BAR)
         self.assertIn("onPressed: function(buttonCode)", BAR)
         self.assertIn("property var adapter", BAR)
 
