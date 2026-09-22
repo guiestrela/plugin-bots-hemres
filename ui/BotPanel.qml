@@ -28,8 +28,13 @@ Item {
         return fallback
     }
 
+    function fallbackAvatarShape(index) {
+        var shapes = ["squircle", "circle", "hex", "cloud", "teardrop", "tablet"]
+        return shapes[index % shapes.length]
+    }
+
     function fallbackAvatarColor(index) {
-        var palette = ["#c9dbcb", "#8fb8e8", "#d8a7e8", "#e8c58f", "#9fd6c2", "#d89ca8"]
+        var palette = ["#c9dbcb", "#d94aa7", "#84d957", "#c9dbcb", "#4bc7e7", "#8f4ee8"]
         return palette[index % palette.length]
     }
 
@@ -51,8 +56,8 @@ Item {
                 description: profileValue(profile, "description", "description", I18n.text("Description not provided", "Descrição não informada")),
                 hasAvatar: Boolean(profile && (profile.has_avatar || profile.hasAvatar)),
                 avatarSource: profileValue(profile, "avatar", "avatarSource", ""),
-                avatarShape: meta.shape || "squircle",
-                avatarColor: meta.color || fallbackAvatarColor(i)
+                avatarShape: fallbackAvatarShape(i),
+                avatarColor: fallbackAvatarColor(i)
             })
         }
         if (profileModel.count === 0)
@@ -152,7 +157,7 @@ Item {
                               ? panel.service.avatarSources[model.profileName] : model.avatarSource
                 avatarShape: model.avatarShape
                 avatarFill: model.avatarColor
-                availability: "unknown"
+                availability: I18n.text("loaded", "carregado")
                 selected: model.profileName === panel.selectedProfile
                 onClicked: {
                     panel.selectedProfile = model.profileName
