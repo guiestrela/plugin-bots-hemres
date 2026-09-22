@@ -62,6 +62,7 @@ ShellRoot {
                     console.log("PBH_FATAL " + component.errorString()); Qt.quit(); return;
                 }
                 harness.widget = component.createObject(barWindow.contentItem, {bar: barStub, width: 29, height: 26,
+                    autoRefreshRoster: false,
                     rosterProfiles: [
                         {name: "synthetic-a", display_name: "SYNTHETIC A — not a real bot", description: "UI regression fixture"},
                         {name: "synthetic-b", display_name: "SYNTHETIC B — not a real bot", description: "UI regression fixture"}

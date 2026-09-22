@@ -78,7 +78,11 @@ class QmlHarnessContractTests(unittest.TestCase):
         self.assertIn("delegationMessage", PANEL)
         self.assertIn("stdinEnabled: true", PANEL)
         self.assertIn("delegationState", PANEL)
-        self.assertIn("enabled: panel.selectedProfile.length > 0", PANEL)
+        # Delegation validates at click time; a stale selection falls back to
+        # the first roster profile instead of silently disabling the action.
+        self.assertIn('enabled: panel.delegationState !== "running"', PANEL)
+        self.assertIn("function delegationProfile()", PANEL)
+        self.assertIn("if (!gatewayUrl || !profile || !task)", PANEL)
 
     def test_panel_does_not_embed_transport_endpoints(self):
         for forbidden in ("/api/ws", "profiles.list", "prompt.submit", "WebSocket", "Qt.network"):

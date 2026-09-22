@@ -24,6 +24,9 @@ BarWidget {
     property var rosterProfiles: []
     property bool rosterLoading: false
     property string rosterError: ""
+    // Surface harnesses inject synthetic fixtures; a live local gateway must
+    // not overwrite them with real profiles during component startup.
+    property bool autoRefreshRoster: true
 
     function refreshService() {
         if (root.shell && root.shell.serviceFor)
@@ -69,7 +72,8 @@ BarWidget {
 
     Component.onCompleted: {
         refreshService()
-        Qt.callLater(refreshRoster)
+        if (autoRefreshRoster)
+            Qt.callLater(refreshRoster)
     }
     onServiceChanged: {
         if (panelContent)
@@ -79,7 +83,7 @@ BarWidget {
     property bool panelOpen: false
     property string tooltipText: I18n.text("Hermes Bots — open profiles panel", "Bots Hermes — abrir painel de bots")
     onPanelOpenChanged: {
-        if (panelOpen && (rosterProfiles.length === 0 || rosterError.length > 0))
+        if (autoRefreshRoster && panelOpen && (rosterProfiles.length === 0 || rosterError.length > 0))
             refreshRoster()
         if (panelOpen)
             Qt.callLater(function() { panelContent.focusTaskInput() })

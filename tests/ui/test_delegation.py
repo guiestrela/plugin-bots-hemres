@@ -24,9 +24,9 @@ class DelegationProcessTests(unittest.TestCase):
                 'import json, sys\n'
                 'payload = json.loads(sys.stdin.readline())\n'
                 'assert payload == {"url":"ws://127.0.0.1:1/api/ws", "profile":"fixture", '
-                '"text":"fixture original — not a user task"}, payload\n'
+                '"text":"fixture original — not a user task"}, payload\n' +
                 ('import time; time.sleep(10)\n' if stall else '') +
-                'print(' + repr(response) + ', flush=True)\n'
+                'print(' + repr(response) + ', flush=True)\n' +
                 'sys.exit(' + str(exit_code) + ')\n')
             shutil.copyfile(ROOT / "tests/ui/delegation.qml", work / "shell.qml")
             env = dict(os.environ, QT_QPA_PLATFORM="offscreen", QT_QUICK_BACKEND="software",

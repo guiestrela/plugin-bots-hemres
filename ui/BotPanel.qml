@@ -282,9 +282,12 @@ Item {
         delegationMessage = I18n.text("Creating session and sending task…", "Criando sessão e enviando tarefa…")
         delegateExited = false
         delegateOutputFinished = false
+        delegateStarted = false
         delegateOutput = ""
         delegateExitCode = -1
         delegateExitStatus = -1
+        delegationWatchdog.interval = delegationTimeoutMs
+        delegationWatchdog.restart()
         delegateRequest.stdinEnabled = true
         delegateRequest.command = [pythonExecutable, delegateFile]
         delegateRequest.running = true
@@ -294,6 +297,8 @@ Item {
 
     property bool delegateExited: false
     property bool delegateOutputFinished: false
+    property bool delegateStarted: false
+    property int delegationTimeoutMs: 15000
     property string delegateOutput: ""
     property int delegateExitCode: -1
     property int delegateExitStatus: -1
@@ -301,6 +306,7 @@ Item {
     function finishDelegation() {
         if (!delegateExited || !delegateOutputFinished || delegationState !== "running")
             return
+        delegationWatchdog.stop()
         var response = null
         try { response = JSON.parse(delegateOutput) } catch (error) {}
         // An ACK is submission, never completion. This one-shot bridge does
@@ -325,6 +331,28 @@ Item {
         delegateOutput = ""
     }
 
+    Timer {
+        id: delegationWatchdog
+        // A stalled helper must never leave the panel spinning forever.
+        interval: panel.delegationTimeoutMs
+        repeat: false
+        onTriggered: {
+            if (panel.delegationState !== "running")
+                return
+            if (panel.delegateStarted) {
+                panel.delegationState = "delivery-uncertain"
+                panel.delegationMessage = I18n.text("Delivery not confirmed. Check Hermes before resending to avoid duplicates.", "Entrega não confirmada. Confira no Hermes antes de reenviar para evitar duplicatas.")
+            } else {
+                panel.delegationState = "failed"
+                panel.delegationMessage = I18n.text("Task not sent: the delegation helper could not start.", "Tarefa não enviada: o auxiliar de delegação não pôde iniciar.")
+            }
+            pendingTask = ""
+            pendingPayload = ""
+            delegateOutput = ""
+            delegateRequest.running = false
+        }
+    }
+
     Process {
         id: delegateRequest
         stdinEnabled: true
@@ -337,12 +365,27 @@ Item {
             }
         }
         onStarted: {
+            panel.delegateStarted = true
             delegateRequest.write(panel.pendingPayload)
             // QProcess drains queued bytes before closing the write channel.
             delegateRequest.stdinEnabled = false
             panel.pendingPayload = ""
         }
+        onRunningChanged: {
+            // A failed start clears the process without raising "exited".
+            if (!delegateRequest.running && panel.delegationState === "running"
+                    && !panel.delegateStarted && !panel.delegateExited) {
+                delegationWatchdog.stop()
+                panel.delegateExited = true
+                panel.delegateOutputFinished = true
+                panel.delegationState = "failed"
+                panel.delegationMessage = I18n.text("Task not sent: the delegation helper could not start.", "Tarefa não enviada: o auxiliar de delegação não pôde iniciar.")
+                panel.pendingTask = ""
+                panel.pendingPayload = ""
+            }
+        }
         onExited: function(exitCode, exitStatus) {
+            delegationWatchdog.stop()
             panel.delegateExitCode = exitCode
             panel.delegateExitStatus = exitStatus
             panel.delegateExited = true
