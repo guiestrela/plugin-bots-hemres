@@ -44,6 +44,8 @@ ItemDelegate {
             Label {
                 text: row.botName
                 textFormat: Text.PlainText
+                font.family: OmarchyTokens.fontFamily
+                font.pixelSize: OmarchyTokens.fontBody
                 color: OmarchyTokens.text
                 font.bold: true
                 elide: Text.ElideRight
@@ -52,6 +54,8 @@ ItemDelegate {
             Label {
                 text: row.botRole.length > 0 ? row.botRole : I18n.text("Role not provided", "Função não informada")
                 textFormat: Text.PlainText
+                font.family: OmarchyTokens.fontFamily
+                font.pixelSize: OmarchyTokens.fontBodySmall
                 color: OmarchyTokens.mutedText
                 elide: Text.ElideRight
                 Layout.fillWidth: true
@@ -59,8 +63,9 @@ ItemDelegate {
             Label {
                 text: I18n.text("Availability: %1", "Disponibilidade: %1").arg(row.availability)
                 textFormat: Text.PlainText
+                font.family: OmarchyTokens.fontFamily
+                font.pixelSize: OmarchyTokens.fontCaption
                 color: OmarchyTokens.mutedText
-                font.pixelSize: 11
                 Layout.fillWidth: true
             }
         }

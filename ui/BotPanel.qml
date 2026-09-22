@@ -162,8 +162,9 @@ Item {
                 text: I18n.text("Hermes Bots", "Bots Hermes")
                 textFormat: Text.PlainText
                 color: OmarchyTokens.text
+                font.family: OmarchyTokens.fontFamily
                 font.bold: true
-                font.pixelSize: 18
+                font.pixelSize: OmarchyTokens.fontSubtitle
                 Layout.fillWidth: true
                 Accessible.role: Accessible.Heading
                 Accessible.name: text
@@ -181,6 +182,8 @@ Item {
                   : panel.viewState === "empty" ? I18n.text("No profiles available", "Nenhum perfil disponível")
                   : I18n.text("Select a profile to see its details", "Selecione um perfil para ver seus detalhes")
             textFormat: Text.PlainText
+            font.family: OmarchyTokens.fontFamily
+            font.pixelSize: OmarchyTokens.fontBodySmall
             color: panel.viewState === "error" ? OmarchyTokens.urgent : OmarchyTokens.mutedText
             wrapMode: Text.WordWrap
             Layout.fillWidth: true
@@ -271,6 +274,8 @@ Item {
                     enabled: true
                     selectByMouse: true
                     persistentSelection: true
+                    font.family: OmarchyTokens.fontFamily
+                    font.pixelSize: OmarchyTokens.fontBody
                     Layout.fillWidth: true
                     Layout.preferredHeight: 58
                     Keys.onPressed: function(event) {
@@ -287,6 +292,8 @@ Item {
                     enabled: true
                     wrapMode: TextArea.Wrap
                     placeholderText: I18n.text("Bot response will appear here", "O retorno do bot aparecerá aqui")
+                    font.family: OmarchyTokens.fontFamily
+                    font.pixelSize: OmarchyTokens.fontBodySmall
                     Layout.fillWidth: true
                     Layout.preferredHeight: 72
                     Accessible.name: I18n.text("Bot response", "Retorno do bot")
