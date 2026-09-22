@@ -2,6 +2,9 @@ import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
 import Quickshell.Io
+import qs.Commons
+import qs.Ui
+import "."
 
 Item {
     id: panel
@@ -169,11 +172,37 @@ Item {
                 Accessible.role: Accessible.Heading
                 Accessible.name: text
             }
-            Button {
-                text: I18n.text("Refresh", "Atualizar")
+            BorderSurface {
+                id: refreshButton
+                property string text: I18n.text("Refresh", "Atualizar")
+                property bool isHovered: refreshMouse.containsMouse
+                property bool isPressed: refreshMouse.pressed
+                signal clicked()
                 enabled: panel.viewState !== "loading"
-                onClicked: panel.refreshRequested()
+                implicitWidth: refreshLabel.implicitWidth + Style.spacing.controlPaddingX * 2
+                implicitHeight: Style.spacing.controlHeight
+                radius: Style.cornerRadius
+                color: Style.controlFill(activeFocus, isHovered || isPressed, Color.popups.text, Color.accent)
+                borderSpec: Border.controlSpec(activeFocus ? "focus" : (isHovered || isPressed ? "hover-cursor" : "normal"), Color.popups.text, Color.accent)
+                Text {
+                    id: refreshLabel
+                    anchors.centerIn: parent
+                    text: refreshButton.text
+                    color: Color.popups.text
+                    font.family: Style.font.family
+                    font.pixelSize: Style.font.body
+                }
+                MouseArea {
+                    id: refreshMouse
+                    anchors.fill: parent
+                    enabled: refreshButton.enabled
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: refreshButton.clicked()
+                }
+                Accessible.role: Accessible.Button
                 Accessible.name: I18n.text("Refresh bot list", "Atualizar lista de bots")
+                onClicked: panel.refreshRequested()
             }
         }
         Label {
@@ -277,6 +306,18 @@ Item {
                         font.pixelSize: OmarchyTokens.fontBody
                         Layout.fillWidth: true
                         Layout.preferredHeight: 58
+                        leftPadding: OmarchyTokens.spacing
+                        rightPadding: OmarchyTokens.spacing
+                        topPadding: OmarchyTokens.compactSpacing
+                        bottomPadding: OmarchyTokens.compactSpacing
+                        background: BorderSurface {
+                            radius: Style.cornerRadius
+                            color: Style.controlFill(inlineTaskInput.activeFocus, inlineTaskInput.hovered,
+                                                      Color.popups.text, Color.accent)
+                            borderSpec: Border.controlSpec(inlineTaskInput.activeFocus ? "focus"
+                                                           : (inlineTaskInput.hovered ? "hover-cursor" : "normal"),
+                                                           Color.popups.text, Color.accent)
+                        }
                         Keys.onPressed: function(event) {
                             if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
                                 event.accepted = true
@@ -287,6 +328,7 @@ Item {
                         Accessible.name: I18n.text("Task for %1", "Tarefa para %1").arg(model.displayName)
                     }
                     TextArea {
+                        id: responseField
                         text: panel.responseFor(model.profileName)
                         readOnly: true
                         enabled: true
@@ -296,13 +338,51 @@ Item {
                         font.pixelSize: OmarchyTokens.fontBodySmall
                         Layout.fillWidth: true
                         Layout.preferredHeight: 72
+                        leftPadding: OmarchyTokens.spacing
+                        rightPadding: OmarchyTokens.spacing
+                        topPadding: OmarchyTokens.compactSpacing
+                        bottomPadding: OmarchyTokens.compactSpacing
+                        background: BorderSurface {
+                            radius: Style.cornerRadius
+                            color: Style.controlFill(responseField.activeFocus, responseField.hovered,
+                                                      Color.popups.text, Color.accent)
+                            borderSpec: Border.controlSpec(responseField.activeFocus ? "focus"
+                                                           : (responseField.hovered ? "hover-cursor" : "normal"),
+                                                           Color.popups.text, Color.accent)
+                        }
                         Accessible.name: I18n.text("Response from %1", "Retorno de %1").arg(model.displayName)
                     }
-                    Button {
-                        text: panel.delegationState === "running" && panel.pendingProfile === model.profileName
+                    BorderSurface {
+                        id: delegateButton
+                        property string text: panel.delegationState === "running" && panel.pendingProfile === model.profileName
                               ? I18n.text("Sending…", "Enviando…")
                               : I18n.text("Delegate", "Delegar")
+                        property bool isHovered: delegateMouse.containsMouse
+                        property bool isPressed: delegateMouse.pressed
+                        signal clicked()
                         enabled: panel.delegationState !== "running"
+                        implicitWidth: delegateLabel.implicitWidth + Style.spacing.controlPaddingX * 2
+                        implicitHeight: Style.spacing.controlHeight
+                        radius: Style.cornerRadius
+                        color: Style.controlFill(activeFocus, isHovered || isPressed, Color.popups.text, Color.accent)
+                        borderSpec: Border.controlSpec(activeFocus ? "focus" : (isHovered || isPressed ? "hover-cursor" : "normal"), Color.popups.text, Color.accent)
+                        Text {
+                            id: delegateLabel
+                            anchors.centerIn: parent
+                            text: delegateButton.text
+                            color: Color.popups.text
+                            font.family: Style.font.family
+                            font.pixelSize: Style.font.body
+                        }
+                        MouseArea {
+                            id: delegateMouse
+                            anchors.fill: parent
+                            enabled: delegateButton.enabled
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: delegateButton.clicked()
+                        }
+                        Accessible.role: Accessible.Button
                         Accessible.name: I18n.text("Delegate task to %1", "Delegar tarefa para %1").arg(model.displayName)
                         Layout.alignment: Qt.AlignRight
                         onClicked: {
