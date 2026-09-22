@@ -95,13 +95,14 @@ BarWidget {
                 root.panelOpen = !root.panelOpen
         }
 
-        Avatar {
+        Image {
             anchors.centerIn: parent
-            diameter: 20
-            shape: "hex"
-            fill: "#c9dbcb"
-            eyeColor: "#0a130b"
-            animate: false
+            source: Qt.resolvedUrl("assets/rakabot-bar.svg")
+            sourceSize: Qt.size(22, 22)
+            width: 22
+            height: 22
+            fillMode: Image.PreserveAspectFit
+            smooth: true
             Accessible.name: I18n.text("Hermes bot", "Bot Hermes")
         }
     }

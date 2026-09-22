@@ -14,7 +14,7 @@ ItemDelegate {
     property color avatarFill: OmarchyTokens.accent
     property bool selected: false
 
-    implicitHeight: 72
+    implicitHeight: 56
     highlighted: selected
     Accessible.role: Accessible.ListItem
     Accessible.name: qsTr("%1, %2").arg(botName).arg(botRole.length > 0 ? botRole : I18n.text("role not provided", "função não informada"))
@@ -31,7 +31,7 @@ ItemDelegate {
     contentItem: RowLayout {
         spacing: OmarchyTokens.spacing
         Avatar {
-            diameter: 44
+            diameter: 36
             shape: row.avatarShape
             fill: row.avatarFill
             image: row.avatarValid && row.avatarSource.length > 0 ? row.avatarSource : ""

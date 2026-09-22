@@ -133,7 +133,7 @@ Item {
             keyNavigationEnabled: true
             Layout.fillWidth: true
             // Reserve complete rows; larger rosters scroll in a bounded area.
-            Layout.preferredHeight: Math.min(contentHeight, 240)
+            Layout.preferredHeight: Math.min(contentHeight, 340)
             Layout.fillHeight: true
             Accessible.role: Accessible.List
             Accessible.name: I18n.text("Hermes profiles", "Perfis Hermes")
