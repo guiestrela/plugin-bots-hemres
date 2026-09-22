@@ -12,6 +12,8 @@ Item {
     // Persistent read-only gateway service supplied by BarWidget.
     property var service: null
     property var adapter: null
+    // Tests can replace this boundary so they verify button wiring without launching apps.
+    property var processLauncher: null
     property var profiles: []
     property string viewState: "error"
     property string errorMessage: I18n.text("Adapter not connected.", "Adaptador não conectado.")
@@ -63,6 +65,25 @@ Item {
             pendingProfile = ""
             delegationState = "idle"
         }
+    }
+
+    function dispatchLaunch(command) {
+        if (processLauncher) {
+            processLauncher(command)
+            return
+        }
+        if (appLaunchProcess.running)
+            return
+        appLaunchProcess.command = command
+        appLaunchProcess.running = true
+    }
+
+    function openHermesDesktop() {
+        dispatchLaunch(["gtk-launch", "hermes-desktop"])
+    }
+
+    function openHermesTui() {
+        dispatchLaunch(["xdg-terminal-exec", "--title=Hermes TUI", "--", "hermes", "--tui"])
     }
 
     function focusTaskInput() {
@@ -268,6 +289,75 @@ Item {
                 Accessible.role: Accessible.Button
                 Accessible.name: I18n.text("Refresh bot list", "Atualizar lista de bots")
                 onClicked: panel.refreshRequested()
+            }
+        }
+        RowLayout {
+            id: launchButtonsRow
+            Layout.fillWidth: true
+            spacing: OmarchyTokens.compactSpacing
+            BorderSurface {
+                id: desktopLaunchButton
+                property string text: I18n.text("Hermes Desktop", "Hermes Desktop")
+                property bool isHovered: desktopLaunchMouse.containsMouse
+                property bool isPressed: desktopLaunchMouse.pressed
+                signal clicked()
+                implicitWidth: Math.max(0, (launchButtonsRow.width - launchButtonsRow.spacing) / 2)
+                implicitHeight: Style.spacing.controlHeight
+                radius: Style.cornerRadius
+                color: Style.controlFill(activeFocus, isHovered || isPressed, Color.popups.text, Color.accent)
+                borderSpec: Border.controlSpec(activeFocus ? "focus" : (isHovered || isPressed ? "hover-cursor" : "normal"), Color.popups.text, Color.accent)
+                Text {
+                    anchors.centerIn: parent
+                    width: parent.width - Style.spacing.controlPaddingX * 2
+                    text: desktopLaunchButton.text
+                    color: Color.popups.text
+                    font.family: Style.font.family
+                    font.pixelSize: Style.font.body
+                    horizontalAlignment: Text.AlignHCenter
+                    elide: Text.ElideRight
+                }
+                MouseArea {
+                    id: desktopLaunchMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: desktopLaunchButton.clicked()
+                }
+                Accessible.role: Accessible.Button
+                Accessible.name: I18n.text("Open Hermes Desktop", "Abrir Hermes Desktop")
+                onClicked: panel.openHermesDesktop()
+            }
+            BorderSurface {
+                id: tuiLaunchButton
+                property string text: I18n.text("Hermes TUI", "Hermes TUI")
+                property bool isHovered: tuiLaunchMouse.containsMouse
+                property bool isPressed: tuiLaunchMouse.pressed
+                signal clicked()
+                Layout.fillWidth: true
+                implicitHeight: Style.spacing.controlHeight
+                radius: Style.cornerRadius
+                color: Style.controlFill(activeFocus, isHovered || isPressed, Color.popups.text, Color.accent)
+                borderSpec: Border.controlSpec(activeFocus ? "focus" : (isHovered || isPressed ? "hover-cursor" : "normal"), Color.popups.text, Color.accent)
+                Text {
+                    anchors.centerIn: parent
+                    width: parent.width - Style.spacing.controlPaddingX * 2
+                    text: tuiLaunchButton.text
+                    color: Color.popups.text
+                    font.family: Style.font.family
+                    font.pixelSize: Style.font.body
+                    horizontalAlignment: Text.AlignHCenter
+                    elide: Text.ElideRight
+                }
+                MouseArea {
+                    id: tuiLaunchMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: tuiLaunchButton.clicked()
+                }
+                Accessible.role: Accessible.Button
+                Accessible.name: I18n.text("Open Hermes TUI in terminal", "Abrir Hermes TUI no terminal")
+                onClicked: panel.openHermesTui()
             }
         }
         Label {
@@ -674,6 +764,15 @@ Item {
             pendingPayload = ""
             delegateOutput = ""
             delegateRequest.running = false
+        }
+    }
+
+    Process {
+        id: appLaunchProcess
+        command: []
+        onExited: {
+            if (exitCode !== 0)
+                console.warn("Hermes app launcher exited with code", exitCode)
         }
     }
 

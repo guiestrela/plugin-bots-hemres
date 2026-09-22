@@ -13,6 +13,7 @@ ShellRoot {
     property int failures: 0
     property var field
     property var btn
+    property var launchRequests: []
     QtObject {
         id: barStub
         property bool vertical: false
@@ -87,6 +88,22 @@ ShellRoot {
             } else if (harness.phase === 1) {
                 var pAll = harness.objects(harness.panel);
                 harness.check(harness.widget.panelOpen && harness.surface.visible, "host trigger opens panel");
+                var desktopLaunchButton = pAll.find(o => o.visible && o.text !== undefined
+                    && String(o.text).indexOf("Hermes Desktop") >= 0 && typeof o.clicked === "function");
+                var tuiLaunchButton = pAll.find(o => o.visible && o.text !== undefined
+                    && String(o.text).indexOf("Hermes TUI") >= 0 && typeof o.clicked === "function");
+                harness.check(desktopLaunchButton && tuiLaunchButton
+                    && desktopLaunchButton.enabled && tuiLaunchButton.enabled
+                    && String(desktopLaunchButton.Accessible.name).toLowerCase().indexOf("desktop") >= 0
+                    && String(tuiLaunchButton.Accessible.name).toLowerCase().indexOf("tui") >= 0,
+                    "Hermes Desktop and TUI launch buttons are visible, enabled, and accessible");
+                harness.panel.processLauncher = function(command) { harness.launchRequests.push(command) };
+                if (desktopLaunchButton) desktopLaunchButton.clicked();
+                if (tuiLaunchButton) tuiLaunchButton.clicked();
+                harness.check(harness.launchRequests.length === 2
+                    && JSON.stringify(harness.launchRequests[0]) === JSON.stringify(["gtk-launch", "hermes-desktop"])
+                    && JSON.stringify(harness.launchRequests[1]) === JSON.stringify(["xdg-terminal-exec", "--title=Hermes TUI", "--", "hermes", "--tui"]),
+                    "launch buttons dispatch native Desktop and default-terminal TUI commands");
                 var window = harness.panel.QsWindow.window;
                 harness.check(window && window !== barWindow && window.height > 26,
                               "independent panel window taller than 26px bar");
