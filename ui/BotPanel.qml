@@ -50,6 +50,13 @@ Item {
         return allowed.indexOf(value) >= 0 ? value : fallbackAvatarShape(index)
     }
 
+    function displayNameFor(profile, fallback) {
+        var name = String(profileValue(profile, "name", "id", "")).toLowerCase()
+        if (name === "desktop-dev")
+            return I18n.text("Desktop Dev", "Desktop Dev")
+        return fallback
+    }
+
     function referenceAvatar(profile, index) {
         var name = String(profileValue(profile, "name", "id", "")).toLowerCase()
         var styles = {
@@ -58,7 +65,8 @@ Item {
             "backend": {shape: "hex", color: "#c9dbcb"},
             "frontend": {shape: "circle", color: "#d94aa7"},
             "assistente-sistema": {shape: "hex", color: "#84d957"},
-            "pentester": {shape: "teardrop", color: "#4bc7e7"}
+            "pentester": {shape: "teardrop", color: "#4bc7e7"},
+            "desktop-dev": {shape: "cloud", color: "#e8a84e"}
         }
         return styles[name] || {shape: fallbackAvatarShape(index), color: fallbackAvatarColor(index)}
     }
@@ -68,7 +76,7 @@ Item {
         for (var i = 0; i < profiles.length; i++) {
             var profile = profiles[i]
             var name = profileValue(profile, "name", "id", "profile-" + i)
-            var displayName = profileValue(profile, "display_name", "displayName", name)
+            var displayName = displayNameFor(profile, profileValue(profile, "display_name", "displayName", name))
             var avatar = referenceAvatar(profile, i)
             profileModel.append({
                 profileName: name,
