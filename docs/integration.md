@@ -94,3 +94,27 @@ incompatíveis com Hermes.
 6. Testes unitários, teste de conexão somente leitura e revisão defensiva.
 
 Nenhum prompt, delegação, aprovação ou alteração de perfil foi enviado nesta investigação.
+
+## PBH-018B — contrato de delegação painel-only
+
+`adapter.hermes_ws.HermesDelegationController` expõe um helper injetável, sem ligação
+com QML, para testar a fronteira de delegação com transporte fake. A allowlist do
+transporte agora contém somente `profiles.list`, `profiles.get_asset`, `session.create`,
+`prompt.submit`, `approval.respond` e `session.interrupt`; métodos arbitrários continuam
+`unsupported`.
+
+O helper valida IDs ASCII estruturados, texto UTF-8 até 16 KiB e correlação por
+`session_id`/`request_id`. Mantém estados `created`, `streaming`, `approval`,
+`completed`, `cancelled` e `delivery-uncertain`. Só aceita decisões de aprovação
+`allow`/`deny`, força `all` booleano e redige a descrição antes de devolvê-la ao
+painel. Eventos de aprovação `secret` e `sudo` são rejeitados; nenhum fluxo de
+`secret.respond`, `sudo.respond`, `clarify.respond`, execução shell ou credencial foi
+habilitado.
+
+A forma do método `prompt.submit` e de `approval.respond` foi observada localmente.
+A assinatura exata de `session.create` (o helper usa `{profile: ...}`) e os nomes de
+conclusão além dos deltas não foram confirmados por uma execução do runtime neste
+checkout; permanecem cobertos apenas por fake transport até validação do gateway.
+Eventos aceitos pelo helper são `message.delta`, `reasoning.delta`, `thinking.delta`,
+`approval.requested`, `message.completed`, `prompt.completed`, `session.completed` e
+`task.completed`. Isso não declara entrega real nem habilita a UI.

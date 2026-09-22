@@ -19,6 +19,17 @@ from urllib.request import Request, urlopen
 _ALLOWED_HOSTS = frozenset({"127.0.0.1", "::1", "localhost"})
 _GATEWAY_PATH = "/api/ws"
 _MAX_MESSAGE_BYTES = 4 * 1024 * 1024
+_MAX_ID_BYTES = 128
+_MAX_TEXT_BYTES = 16 * 1024
+_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$")
+_DELEGATION_METHODS = frozenset({
+    "profiles.list", "profiles.get_asset", "session.create", "prompt.submit",
+    "approval.respond", "session.interrupt",
+})
+_DELTA_EVENTS = frozenset({"message.delta", "reasoning.delta", "thinking.delta"})
+_COMPLETION_EVENTS = frozenset({
+    "message.completed", "prompt.completed", "session.completed", "task.completed",
+})
 
 
 class HermesTransportError(Exception):
@@ -138,7 +149,7 @@ class HermesWebSocketTransport:
 
     async def request(self, method: str, params: dict[str, Any]) -> Any:
         """Send one supported JSON-RPC request and close its socket."""
-        if method not in {"profiles.list", "profiles.get_asset"}:
+        if method not in _DELEGATION_METHODS:
             raise UnsupportedHermesMethod("Hermes method is not enabled.")
         if not isinstance(params, dict):
             raise HermesTransportError("Hermes request is invalid.")
@@ -206,3 +217,114 @@ class HermesWebSocketTransport:
         if not isinstance(value, dict) or value.get("jsonrpc") != "2.0":
             raise HermesTransportError("Hermes response is invalid.")
         return value
+
+
+class HermesDelegationController:
+    """Panel-only delegation contract, transport-injected for deterministic tests.
+
+    This helper deliberately accepts only structured text and identifiers. It
+    never exposes approval descriptions or handles secret/sudo input.
+    """
+
+    def __init__(self, transport: Any) -> None:
+        self._transport = transport
+        self._states: dict[str, dict[str, Any]] = {}
+
+    async def create_session(self, profile: str) -> str:
+        _validate_id(profile, "profile")
+        result = await self._transport.request("session.create", {"profile": profile})
+        if not isinstance(result, dict) or not _valid_id(result.get("session_id")):
+            raise HermesTransportError("Hermes session response is invalid.")
+        session_id = result["session_id"]
+        self._states[session_id] = _new_state(session_id, "created")
+        return session_id
+
+    async def submit(self, session_id: str, text: str) -> dict[str, Any]:
+        _validate_id(session_id, "session_id")
+        _validate_text(text)
+        try:
+            await self._transport.request("prompt.submit", {"session_id": session_id, "text": text})
+        except HermesTransportError:
+            self._states[session_id] = _new_state(session_id, "delivery-uncertain")
+            raise
+        self._states[session_id] = _new_state(session_id, "streaming")
+        return self.state(session_id)
+
+    async def respond_approval(self, session_id: str, request_id: str, choice: str, all: bool = False) -> dict[str, Any]:
+        _validate_id(session_id, "session_id")
+        _validate_id(request_id, "request_id")
+        if choice not in {"allow", "deny"} or type(all) is not bool:
+            raise HermesTransportError("Approval choice is not allowed.")
+        result = await self._transport.request("approval.respond", {
+            "session_id": session_id, "request_id": request_id,
+            "choice": choice, "all": all,
+        })
+        self._states.setdefault(session_id, _new_state(session_id, "streaming"))
+        self._states[session_id]["state"] = "streaming"
+        return result if isinstance(result, dict) else {"accepted": True}
+
+    async def cancel(self, session_id: str) -> dict[str, Any]:
+        _validate_id(session_id, "session_id")
+        result = await self._transport.request("session.interrupt", {"session_id": session_id})
+        self._states[session_id] = _new_state(session_id, "cancelled")
+        return result if isinstance(result, dict) else {"interrupted": True}
+
+    def handle_event(self, event: dict[str, Any]) -> dict[str, Any]:
+        if not isinstance(event, dict) or event.get("jsonrpc", "2.0") != "2.0":
+            raise HermesTransportError("Hermes event is invalid.")
+        method = event.get("method")
+        params = event.get("params")
+        if not isinstance(method, str) or not isinstance(params, dict):
+            raise HermesTransportError("Hermes event is invalid.")
+        if method == "gateway.ready":
+            return {"state": "ready"}
+        session_id = params.get("session_id")
+        _validate_id(session_id, "session_id")
+        state = self._states.setdefault(session_id, _new_state(session_id, "streaming"))
+        if method in _DELTA_EVENTS:
+            text = params.get("text")
+            _validate_text(text)
+            state["state"] = "streaming"
+            state[{"message.delta": "message", "reasoning.delta": "reasoning", "thinking.delta": "thinking"}[method]] += text
+        elif method == "approval.requested":
+            kind = params.get("kind", "command")
+            if kind in {"secret", "sudo"}:
+                raise HermesTransportError("Secret and sudo approvals are unsupported.")
+            request_id = params.get("request_id")
+            _validate_id(request_id, "request_id")
+            state["state"] = "approval"
+            state["approval"] = {"request_id": request_id, "kind": "command", "description": "Approval required."}
+        elif method in _COMPLETION_EVENTS:
+            state["state"] = "completed"
+        elif method in {"gateway.ready", "session.status"}:
+            return self.state(session_id)
+        else:
+            raise UnsupportedHermesMethod("Hermes event is not enabled.")
+        return self.state(session_id)
+
+    def state(self, session_id: str) -> dict[str, Any]:
+        _validate_id(session_id, "session_id")
+        return dict(self._states.get(session_id, _new_state(session_id, "unknown")))
+
+
+def _valid_id(value: Any) -> bool:
+    return isinstance(value, str) and len(value.encode("utf-8")) <= _MAX_ID_BYTES and bool(_ID_RE.fullmatch(value))
+
+
+def _validate_id(value: Any, label: str) -> None:
+    if not _valid_id(value):
+        raise HermesTransportError(f"{label} is invalid.")
+
+
+def _validate_text(value: Any) -> None:
+    if not isinstance(value, str) or not value or "\x00" in value:
+        raise HermesTransportError("Text is invalid.")
+    try:
+        if len(value.encode("utf-8")) > _MAX_TEXT_BYTES:
+            raise HermesTransportError("Text exceeds the limit.")
+    except UnicodeEncodeError as exc:
+        raise HermesTransportError("Text is invalid.") from exc
+
+
+def _new_state(session_id: str, status: str) -> dict[str, Any]:
+    return {"session_id": session_id, "state": status, "message": "", "reasoning": "", "thinking": ""}

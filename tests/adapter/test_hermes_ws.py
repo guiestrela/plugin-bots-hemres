@@ -6,6 +6,7 @@ from urllib.parse import urlparse
 from adapter.hermes_ws import (
     HermesWebSocketTransport,
     HermesTransportError,
+    HermesDelegationController,
     UnsupportedHermesMethod,
     validate_gateway_url,
 )
@@ -130,10 +131,81 @@ class HermesWebSocketTransportTests(unittest.TestCase):
         self.assertEqual(str(raised.exception), "Hermes request timed out.")
         self.assertTrue(socket.closed)
 
-    def test_prompt_submit_is_not_active(self):
+    def test_arbitrary_method_is_not_active(self):
         transport = HermesWebSocketTransport("ws://127.0.0.1:8765/api/ws", session_token="test")
         with self.assertRaises(UnsupportedHermesMethod):
-            self.run_async(transport.request("prompt.submit", {"text": "do not send"}))
+            self.run_async(transport.request("shell.exec", {"command": "do not send"}))
+
+
+class FakeDelegationTransport:
+    def __init__(self, responses=None, error=None):
+        self.calls = []
+        self.responses = list(responses or [])
+        self.error = error
+
+    async def request(self, method, params):
+        self.calls.append((method, params))
+        if self.error:
+            raise self.error
+        return self.responses.pop(0)
+
+
+class HermesDelegationControllerTests(unittest.TestCase):
+    def run_async(self, awaitable):
+        return asyncio.run(awaitable)
+
+    def test_fake_session_creation_and_prompt_submission_are_structured(self):
+        fake = FakeDelegationTransport([{"session_id": "sess-1"}, {"accepted": True}])
+        controller = HermesDelegationController(fake)
+        self.assertEqual(self.run_async(controller.create_session("backend")), "sess-1")
+        result = self.run_async(controller.submit("sess-1", "Faça a tarefa"))
+        self.assertEqual(result["state"], "streaming")
+        self.assertEqual(fake.calls, [
+            ("session.create", {"profile": "backend"}),
+            ("prompt.submit", {"session_id": "sess-1", "text": "Faça a tarefa"}),
+        ])
+
+    def test_deltas_and_completion_update_panel_only_state(self):
+        controller = HermesDelegationController(FakeDelegationTransport())
+        self.assertEqual(controller.handle_event({"method": "message.delta", "params": {"session_id": "s", "text": "olá"}})["state"], "streaming")
+        controller.handle_event({"method": "reasoning.delta", "params": {"session_id": "s", "text": "r"}})
+        controller.handle_event({"method": "thinking.delta", "params": {"session_id": "s", "text": "t"}})
+        state = controller.handle_event({"method": "message.completed", "params": {"session_id": "s"}})
+        self.assertEqual(state["state"], "completed")
+        self.assertEqual(state["message"], "olá")
+        self.assertEqual(state["reasoning"], "r")
+        self.assertEqual(state["thinking"], "t")
+
+    def test_approval_is_redacted_and_only_allow_deny_are_sendable(self):
+        fake = FakeDelegationTransport([{"ok": True}])
+        controller = HermesDelegationController(fake)
+        approval = controller.handle_event({"method": "approval.requested", "params": {
+            "session_id": "s", "request_id": "r", "kind": "command", "description": "sudo cat secret.txt"
+        }})
+        self.assertEqual(approval["state"], "approval")
+        self.assertNotIn("secret.txt", approval["approval"])
+        self.run_async(controller.respond_approval("s", "r", "allow"))
+        self.assertEqual(fake.calls[0], ("approval.respond", {"session_id": "s", "request_id": "r", "choice": "allow", "all": False}))
+        with self.assertRaises(HermesTransportError):
+            self.run_async(controller.respond_approval("s", "r", "sudo"))
+
+    def test_cancel_timeout_and_delivery_uncertain_are_explicit(self):
+        fake = FakeDelegationTransport([{"interrupted": True}])
+        controller = HermesDelegationController(fake)
+        self.run_async(controller.cancel("s"))
+        self.assertEqual(controller.state("s")["state"], "cancelled")
+        timed_out = HermesTransportError("Hermes request timed out.")
+        uncertain = HermesDelegationController(FakeDelegationTransport(error=timed_out))
+        with self.assertRaises(HermesTransportError):
+            self.run_async(uncertain.submit("s", "texto"))
+        self.assertEqual(uncertain.state("s")["state"], "delivery-uncertain")
+
+    def test_secret_and_sudo_approval_events_are_rejected(self):
+        controller = HermesDelegationController(FakeDelegationTransport())
+        for kind in ("secret", "sudo"):
+            with self.subTest(kind=kind):
+                with self.assertRaises(HermesTransportError):
+                    controller.handle_event({"method": "approval.requested", "params": {"session_id": "s", "request_id": "r", "kind": kind}})
 
 
 if __name__ == "__main__":
