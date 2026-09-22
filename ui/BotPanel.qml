@@ -50,7 +50,7 @@ Item {
     }
 
     function focusTaskInput() {
-        taskInput.forceActiveFocus()
+        // The task editor is owned by the selected ListView delegate.
     }
 
     implicitWidth: 360
@@ -223,97 +223,98 @@ Item {
             ScrollBar.vertical: ScrollBar {
                 policy: ScrollBar.AsNeeded
             }
-            delegate: BotRow {
+            delegate: ColumnLayout {
                 width: profileList.width
-                botId: model.profileName
-                botName: model.displayName
-                botRole: model.description
-                avatarValid: model.hasAvatar || Boolean(panel.service && panel.service.avatarSources
-                                                       && panel.service.avatarSources[model.profileName])
-                avatarSource: panel.service && panel.service.avatarSources
-                              && panel.service.avatarSources[model.profileName]
-                              ? panel.service.avatarSources[model.profileName] : model.avatarSource
-                avatarShape: model.avatarShape
-                avatarFill: model.avatarColor
-                availability: I18n.text("loaded", "carregado")
-                selected: model.profileName === panel.selectedProfile
-                onClicked: {
-                    panel.selectedProfile = model.profileName
-                    panel.taskText = panel.draftFor(model.profileName)
-                    panel.setResponse(model.profileName, panel.responseFor(model.profileName))
-                    if (panel.service && panel.service.fetchAvatar)
-                        panel.service.fetchAvatar(model.profileName)
-                }
-            }
-        }
-
-        GroupBox {
-            visible: panel.viewState === "ready" && profileModel.count > 0 && panel.selectedProfile.length > 0
-            title: I18n.text("Delegate to %1", "Delegar para %1").arg(panel.selectedProfile)
-            Layout.fillWidth: true
-            enabled: true
-            implicitHeight: delegateLayout.implicitHeight + 48
-            ColumnLayout {
-                id: delegateLayout
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.top: parent.top
-                anchors.bottom: parent.bottom
-                TextArea {
-                    id: taskInput
-                    text: panel.draftFor(panel.selectedProfile)
-                    onTextChanged: {
-                        if (panel.selectedProfile.length > 0 && text !== panel.draftFor(panel.selectedProfile))
-                            panel.setDraft(panel.selectedProfile, text)
-                        panel.taskText = text
-                    }
-                    focus: false
-                    activeFocusOnPress: true
-                    placeholderText: I18n.text("Describe the task…", "Descreva a tarefa…")
-                    readOnly: false
-                    enabled: true
-                    selectByMouse: true
-                    persistentSelection: true
-                    font.family: OmarchyTokens.fontFamily
-                    font.pixelSize: OmarchyTokens.fontBody
+                spacing: OmarchyTokens.compactSpacing
+                BotRow {
+                    id: botRow
                     Layout.fillWidth: true
-                    Layout.preferredHeight: 58
-                    Keys.onPressed: function(event) {
-                        if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                            event.accepted = true
+                    botId: model.profileName
+                    botName: model.displayName
+                    botRole: model.description
+                    avatarValid: model.hasAvatar || Boolean(panel.service && panel.service.avatarSources
+                                                           && panel.service.avatarSources[model.profileName])
+                    avatarSource: panel.service && panel.service.avatarSources
+                                  && panel.service.avatarSources[model.profileName]
+                                  ? panel.service.avatarSources[model.profileName] : model.avatarSource
+                    avatarShape: model.avatarShape
+                    avatarFill: model.avatarColor
+                    availability: I18n.text("loaded", "carregado")
+                    selected: model.profileName === panel.selectedProfile
+                    onClicked: {
+                        panel.selectedProfile = model.profileName
+                        panel.taskText = panel.draftFor(model.profileName)
+                        if (panel.service && panel.service.fetchAvatar)
+                            panel.service.fetchAvatar(model.profileName)
+                    }
+                }
+                ColumnLayout {
+                    visible: panel.selectedProfile === model.profileName
+                    Layout.fillWidth: true
+                    Layout.leftMargin: OmarchyTokens.spacing
+                    Layout.rightMargin: OmarchyTokens.spacing
+                    TextArea {
+                        id: inlineTaskInput
+                        text: panel.draftFor(model.profileName)
+                        onTextChanged: {
+                            if (text !== panel.draftFor(model.profileName))
+                                panel.setDraft(model.profileName, text)
+                            if (panel.selectedProfile === model.profileName)
+                                panel.taskText = text
+                        }
+                        activeFocusOnPress: true
+                        placeholderText: I18n.text("Describe the task…", "Descreva a tarefa…")
+                        readOnly: false
+                        enabled: true
+                        selectByMouse: true
+                        persistentSelection: true
+                        font.family: OmarchyTokens.fontFamily
+                        font.pixelSize: OmarchyTokens.fontBody
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 58
+                        Keys.onPressed: function(event) {
+                            if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                                event.accepted = true
+                                panel.selectedProfile = model.profileName
+                                panel.delegate()
+                            }
+                        }
+                        Accessible.name: I18n.text("Task for %1", "Tarefa para %1").arg(model.displayName)
+                    }
+                    TextArea {
+                        text: panel.responseFor(model.profileName)
+                        readOnly: true
+                        enabled: true
+                        wrapMode: TextArea.Wrap
+                        placeholderText: I18n.text("Bot response will appear here", "O retorno do bot aparecerá aqui")
+                        font.family: OmarchyTokens.fontFamily
+                        font.pixelSize: OmarchyTokens.fontBodySmall
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 72
+                        Accessible.name: I18n.text("Response from %1", "Retorno de %1").arg(model.displayName)
+                    }
+                    Button {
+                        text: panel.delegationState === "running" && panel.pendingProfile === model.profileName
+                              ? I18n.text("Sending…", "Enviando…")
+                              : I18n.text("Delegate", "Delegar")
+                        enabled: panel.delegationState !== "running"
+                        Accessible.name: I18n.text("Delegate task to %1", "Delegar tarefa para %1").arg(model.displayName)
+                        Layout.alignment: Qt.AlignRight
+                        onClicked: {
+                            panel.selectedProfile = model.profileName
                             panel.delegate()
                         }
                     }
-                    Accessible.name: I18n.text("Task to delegate", "Tarefa para delegar")
-                }
-                TextArea {
-                    text: panel.responseFor(panel.selectedProfile)
-                    readOnly: true
-                    enabled: true
-                    wrapMode: TextArea.Wrap
-                    placeholderText: I18n.text("Bot response will appear here", "O retorno do bot aparecerá aqui")
-                    font.family: OmarchyTokens.fontFamily
-                    font.pixelSize: OmarchyTokens.fontBodySmall
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 72
-                    Accessible.name: I18n.text("Bot response", "Retorno do bot")
-                }
-                Button {
-                    text: panel.delegationState === "running"
-                          ? I18n.text("Sending…", "Enviando…")
-                          : I18n.text("Delegate", "Delegar")
-                    enabled: panel.delegationState !== "running"
-                    Accessible.name: I18n.text("Delegate task", "Delegar tarefa")
-                    Layout.alignment: Qt.AlignRight
-                    onClicked: panel.delegate()
-                }
-                Label {
-                    text: panel.delegationMessage
-                    visible: text.length > 0
-                    textFormat: Text.PlainText
-                    color: OmarchyTokens.mutedText
-                    wrapMode: Text.WordWrap
-                    Layout.fillWidth: true
+                    Label {
+                        text: panel.delegationMessage
+                        visible: panel.pendingProfile === model.profileName && text.length > 0
+                        textFormat: Text.PlainText
+                        font.family: OmarchyTokens.fontFamily
+                        font.pixelSize: OmarchyTokens.fontBodySmall
+                        color: OmarchyTokens.mutedText
+                        wrapMode: Text.WordWrap
+                        Layout.fillWidth: true
+                    }
                 }
             }
         }
@@ -326,7 +327,7 @@ Item {
         if (delegateRequest.running || delegationState === "running")
             return
         var profile = delegationProfile()
-        var task = taskInput.text.trim()
+        var task = draftFor(profile).trim()
         if (!gatewayUrl || !profile || !task) {
             delegationState = "failed"
             delegationMessage = I18n.text("Not sent: select a profile, configure the gateway and enter a task.", "Não enviado: selecione um perfil, configure o gateway e digite uma tarefa.")
@@ -377,10 +378,8 @@ Item {
                     : I18n.text("Bot concluiu a tarefa.", "Bot concluiu a tarefa."))
                 : I18n.text("Enviado ao bot; conclusão ainda não confirmada.", "Enviado ao bot; conclusão ainda não confirmada.")
             setResponse(pendingProfile, completion.length > 0 ? completion : delegationMessage)
-            if (taskInput.text === pendingTask) {
-                taskInput.text = ""
+            if (draftFor(pendingProfile) === pendingTask)
                 setDraft(pendingProfile, "")
-            }
         } else if (delegateExitCode === 0 && delegateExitStatus === 0 && response
                    && response.ok === false && (response.state === "failed" || response.state === "delivery-uncertain")) {
             delegationState = response.state

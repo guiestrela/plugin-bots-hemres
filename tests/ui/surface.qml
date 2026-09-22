@@ -87,12 +87,14 @@ ShellRoot {
                 harness.check(window && window !== barWindow && window.height > 26,
                               "independent panel window taller than 26px bar");
                 var rows = [harness.list.itemAtIndex(0), harness.list.itemAtIndex(1)];
+                var rowControls = rows.map(r => r && r.botName !== undefined ? r : (r && r.children ? r.children.find(c => c.botName !== undefined) : null));
                 console.log("PBH_GEOMETRY " + JSON.stringify({barHeight: barWindow.height, panelHeight: window ? window.height : null,
-                    listHeight: harness.list.height, rows: rows.map(r => r ? {name: r.botName, y: r.y, height: r.height} : null)}));
-                harness.check(rows.every(r => r && r.botName.indexOf("SYNTHETIC") === 0 && r.height >= r.implicitHeight
+                    listHeight: harness.list.height, rows: rowControls.map(r => r ? {name: r.botName, y: r.y, height: r.height} : null)}));
+                harness.check(rowControls.every(r => r && r.botName.indexOf("SYNTHETIC") === 0 && r.height >= r.implicitHeight
                     && r.y >= harness.list.contentY && r.y + r.height <= harness.list.contentY + harness.list.height),
                     "two explicitly synthetic rows fully inside viewport");
                 harness.check(harness.panel.delegationState === "idle", "delegation starts idle");
+                rowControls[0].clicked();
                 harness.field = pAll.find(o => o.placeholderText !== undefined
                     && (String(o.placeholderText).indexOf("Descreva a tarefa") >= 0
                         || String(o.placeholderText).indexOf("Describe the task") >= 0));
