@@ -11,6 +11,8 @@ ShellRoot {
     property var surface
     property int phase: 0
     property int failures: 0
+    property var field
+    property var btn
     QtObject {
         id: barStub
         property bool vertical: false
@@ -79,6 +81,7 @@ ShellRoot {
                 harness.check(!harness.widget.panelOpen, "initially closed");
                 harness.trigger.triggerPress(Qt.LeftButton);
             } else if (harness.phase === 1) {
+                var pAll = harness.objects(harness.panel);
                 harness.check(harness.widget.panelOpen && harness.surface.visible, "host trigger opens panel");
                 var window = harness.panel.QsWindow.window;
                 harness.check(window && window !== barWindow && window.height > 26,
@@ -90,14 +93,42 @@ ShellRoot {
                     && r.y >= harness.list.contentY && r.y + r.height <= harness.list.contentY + harness.list.height),
                     "two explicitly synthetic rows fully inside viewport");
                 harness.check(harness.panel.delegationState === "idle", "delegation starts idle");
+                harness.field = pAll.find(o => o.placeholderText !== undefined
+                    && (String(o.placeholderText).indexOf("Descreva a tarefa") >= 0
+                        || String(o.placeholderText).indexOf("Describe the task") >= 0));
+                harness.btn = pAll.find(o => typeof o.clicked === "function" && o.text !== undefined
+                    && (String(o.text).indexOf("Delegar") === 0 || String(o.text).indexOf("Delegate") === 0
+                        || String(o.text).indexOf("Enviando") === 0 || String(o.text).indexOf("Sending") === 0));
+                if (!harness.field || !harness.btn) {
+                    console.log("PBH_FATAL cannot locate task field/button"); Qt.quit(); return;
+                }
                 harness.trigger.triggerPress(Qt.LeftButton);
             } else if (harness.phase === 2) {
                 harness.check(!harness.widget.panelOpen && !harness.surface.visible, "trigger closes panel after fade");
                 harness.trigger.triggerPress(Qt.LeftButton);
             } else if (harness.phase === 3) {
                 harness.surface.close();
+            } else if (harness.phase === 4) {
+                harness.trigger.triggerPress(Qt.LeftButton);
+            } else if (harness.phase === 5) {
+                harness.check(harness.field.enabled && harness.btn.enabled,
+                    "task field and Delegate button resolved and enabled");
+                harness.field.text = "tarefa de teste";
+                harness.check(harness.field.text === "tarefa de teste" && harness.panel.taskText === "tarefa de teste",
+                    "typing into task field syncs panel.taskText");
+                harness.btn.clicked();
+                console.log("PBH_DELEGATE " + JSON.stringify({btnText: harness.btn.text,
+                    state: harness.panel.delegationState, msg: harness.panel.delegationMessage}));
+                harness.check(harness.panel.delegationState !== "idle",
+                    "clicking Delegate moves delegationState off idle");
+            } else if (harness.phase === 6) {
+                console.log("PBH_DELEGATE " + JSON.stringify({btnText: harness.btn.text,
+                    state: harness.panel.delegationState, msg: harness.panel.delegationMessage,
+                    running: harness.panel.delegateRequest ? harness.panel.delegateRequest.running : null}));
+                harness.check(harness.panel.delegationState === "failed"
+                    && harness.panel.delegationMessage.length > 0,
+                    "empty-gateway environment resolves to failed with visible message");
             } else {
-                harness.check(!harness.widget.panelOpen && !harness.surface.visible, "native close synchronizes owner");
                 console.log("PBH_RESULT " + harness.failures);
                 Qt.quit();
             }

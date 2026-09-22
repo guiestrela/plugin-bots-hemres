@@ -28,7 +28,15 @@ class HermesWebSocketTransport(_BaseTransport):
 
     async def _request_once(self, request_id: int, request: dict[str, Any]) -> Any:
         wire = json.dumps(request, ensure_ascii=False, separators=(",", ":")) + "\n"
-        async with self._connect(
+        connect = self._connect
+        if connect is None:
+            try:
+                from websockets import connect as connect
+            except ImportError as exc:  # pragma: no cover - environment dependent
+                raise HermesTransportError(
+                    "WebSocket support is unavailable; install websockets to enable Hermes transport."
+                ) from exc
+        async with connect(
             _with_token(self.url, self._session_token) if self._session_token else self.url,
             open_timeout=self.timeout, close_timeout=1.0, max_size=_MAX_MESSAGE_BYTES,
         ) as socket:

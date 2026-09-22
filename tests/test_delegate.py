@@ -121,6 +121,27 @@ class DelegateTests(unittest.TestCase):
             ("prompt.submit", {"session_id": "abc12345", "text": "fixture task"}),
         ])
 
+    def test_falls_back_to_websockets_connect_when_connect_is_none(self):
+        # Runtime (not tests) leaves connect=None; _request_once must lazy-import
+        # websockets.connect exactly as the base transport does. This used to
+        # crash with TypeError ('NoneType' object is not callable) and surfaced
+        # only as gateway_unavailable, so the panel never actually sent.
+        import sys
+        import types
+
+        socket = FixtureSocket([READY, rpc({"session_id": "abc12345"}, 1)])
+        fake_websockets = types.ModuleType("websockets")
+        fake_websockets.connect = lambda *a, **k: socket
+        # session_token skips the network token discovery; connect stays None.
+        transport = delegate.HermesWebSocketTransport(PAYLOAD["url"], session_token="fixture-token")
+        self.assertIsNone(transport._connect)
+        with patch.dict(sys.modules, {"websockets": fake_websockets}):
+            result = asyncio.run(transport.request(
+                "session.create",
+                {"profile": "fixture", "source": "hermes-bots-plugin", "close_on_disconnect": False}))
+        self.assertEqual(result, {"session_id": "abc12345"})
+        self.assertEqual(len(socket.sent), 1)
+
 
 if __name__ == "__main__":
     unittest.main()
