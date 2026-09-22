@@ -158,6 +158,21 @@ ShellRoot {
                 harness.check(harness.panel.delegationState === "failed"
                     && harness.panel.delegationMessage.length > 0,
                     "empty-gateway environment resolves to failed with visible message");
+            } else if (harness.phase === 7) {
+                var syntheticCompletion = "SYNTHETIC FULL BOT RESPONSE — must remain internal";
+                harness.panel.pendingProfile = "synthetic-f";
+                harness.panel.pendingTask = "synthetic task";
+                harness.panel.delegationState = "running";
+                harness.panel.delegateExited = true;
+                harness.panel.delegateOutputFinished = true;
+                harness.panel.delegateExitCode = 0;
+                harness.panel.delegateExitStatus = 0;
+                harness.panel.delegateOutput = JSON.stringify({ok: true, state: "completed", completion: syntheticCompletion});
+                harness.panel.finishDelegation();
+                harness.check(harness.panel.delegationMessage.indexOf(syntheticCompletion) < 0,
+                    "full bot response is not rendered as delegation status");
+                harness.check(harness.panel.responseFor("synthetic-f") === syntheticCompletion,
+                    "full bot response remains available in internal per-profile state");
             } else {
                 console.log("PBH_RESULT " + harness.failures);
                 Qt.quit();

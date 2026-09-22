@@ -548,10 +548,8 @@ Item {
             delegationState = response.state
             var completion = response.completion ? String(response.completion) : ""
             delegationMessage = response.state === "completed"
-                ? (completion.length > 0
-                    ? I18n.text("Bot concluído: %1", "Bot concluído: %1").arg(completion)
-                    : I18n.text("Bot concluiu a tarefa.", "Bot concluiu a tarefa."))
-                : I18n.text("Enviado ao bot; conclusão ainda não confirmada.", "Enviado ao bot; conclusão ainda não confirmada.")
+                ? I18n.text("Bot completed the task.", "Bot concluiu a tarefa.")
+                : I18n.text("Sent to bot; completion is not confirmed.", "Enviado ao bot; conclusão ainda não confirmada.")
             setResponse(pendingProfile, completion.length > 0 ? completion : delegationMessage)
             if (draftFor(pendingProfile) === pendingTask)
                 setDraft(pendingProfile, "")
