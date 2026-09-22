@@ -28,18 +28,26 @@ Item {
         return fallback
     }
 
+    function profileMeta(profile) {
+        var meta = profile && profile.ui_meta && profile.ui_meta["hermes-bots"]
+        return meta && typeof meta === "object" ? meta : {}
+    }
+
     function rebuildProfiles() {
         profileModel.clear()
         for (var i = 0; i < profiles.length; i++) {
             var profile = profiles[i]
             var name = profileValue(profile, "name", "id", "profile-" + i)
             var displayName = profileValue(profile, "display_name", "displayName", name)
+            var meta = profileMeta(profile)
             profileModel.append({
                 profileName: name,
                 displayName: displayName,
                 description: profileValue(profile, "description", "description", I18n.text("Description not provided", "Descrição não informada")),
                 hasAvatar: Boolean(profile && (profile.has_avatar || profile.hasAvatar)),
-                avatarSource: profileValue(profile, "avatar", "avatarSource", "")
+                avatarSource: profileValue(profile, "avatar", "avatarSource", ""),
+                avatarShape: meta.shape || "squircle",
+                avatarColor: meta.color || "#777777"
             })
         }
         if (profileModel.count === 0)
@@ -134,6 +142,9 @@ Item {
                 avatarSource: panel.service && panel.service.avatarSources
                               && panel.service.avatarSources[model.profileName]
                               ? panel.service.avatarSources[model.profileName] : model.avatarSource
+                avatarShape: model.avatarShape
+                avatarFill: model.avatarColor
+                availability: "unknown"
                 selected: model.profileName === panel.selectedProfile
                 onClicked: {
                     panel.selectedProfile = model.profileName

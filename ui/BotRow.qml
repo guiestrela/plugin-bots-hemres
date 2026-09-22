@@ -10,6 +10,8 @@ ItemDelegate {
     property bool avatarValid: false
     property string avatarSource: ""
     property string availability: "unknown"
+    property string avatarShape: "squircle"
+    property color avatarFill: OmarchyTokens.accent
     property bool selected: false
 
     implicitHeight: 72
@@ -28,11 +30,12 @@ ItemDelegate {
 
     contentItem: RowLayout {
         spacing: OmarchyTokens.spacing
-        BotAvatar {
+        Avatar {
             diameter: 44
-            displayName: row.botName
-            imageValid: row.avatarValid
-            imageSource: row.avatarSource
+            shape: row.avatarShape
+            fill: row.avatarFill
+            image: row.avatarValid && row.avatarSource.length > 0 ? row.avatarSource : ""
+            animate: false
             Layout.alignment: Qt.AlignVCenter
         }
         ColumnLayout {

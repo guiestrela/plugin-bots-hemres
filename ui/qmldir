@@ -2,5 +2,6 @@ module PBH.Ui
 singleton I18n 1.0 I18n.qml
 singleton OmarchyTokens 1.0 OmarchyTokens.qml
 BotAvatar 1.0 BotAvatar.qml
+Avatar 1.0 Avatar.qml
 BotRow 1.0 BotRow.qml
 BotPanel 1.0 BotPanel.qml
