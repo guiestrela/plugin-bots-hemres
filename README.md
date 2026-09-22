@@ -3,7 +3,8 @@
 **Hermes Bots** is an alpha Omarchy service/bar widget for a Hermes bot roster
 and explicit task delegation. It is designed for the Quickshell-based Omarchy
 shell and the Glass Bar ecosystem. It connects only to an explicitly configured
-local Hermes gateway.
+local Hermes gateway, discovering its active loopback port automatically when
+the configured port is unavailable.
 
 The bar entry point opens a bot panel with loading, error, empty, roster,
 selection, avatar-placeholder, and task-submission states. There is no automatic
@@ -43,7 +44,9 @@ omarchy plugin add https://github.com/guiestrela/plugin-bots-hemres.git --yes
 omarchy plugin enable io.github.guiestrela.hermes-bots
 ```
 
-Configure the widget with a loopback URL, for example:
+The widget can use a loopback URL as a preference, but this is optional. If the
+configured port is stale or unavailable, active local Hermes gateways are
+discovered automatically:
 
 ```sh
 omarchy bar set io.github.guiestrela.hermes-bots gatewayUrl \
@@ -97,7 +100,7 @@ streaming, approvals, or real task delivery.
 
 ## Architecture
 
-The intended future shape is:
+The current integration shape is:
 
 ```text
 Glass Bar / Omarchy shell
@@ -106,13 +109,13 @@ Glass Bar / Omarchy shell
 BarWidget.qml (compact trigger)
         |
         v
-Panel-only QML UI (future)
+Panel-only QML UI
         |
         v
-Allowlisted local adapter (future)
+Allowlisted local adapter
         |
         v
-Hermes Gateway / runtime (not verified)
+Hermes Gateway / runtime
 ```
 
 The proposed RPC boundary, UI discovery, and host findings are maintained
@@ -127,8 +130,7 @@ allowlists, validation, redaction, correlation, and uncertainty handling.
   security sandbox.
 - No credentials, Hermes profiles, gateway tokens, or private history are read
   by the bar wrapper.
-- No shell command, subprocess, network endpoint, or RPC call is started by
-  `BarWidget.qml`.
+- Network access is limited to validated loopback Hermes WebSocket gateways.
 - Future task text must remain structured data, must not be placed in shell
   argv or logs, and must require explicit user confirmation.
 - Secrets and sudo requests must never be captured by the panel.
@@ -137,15 +139,14 @@ allowlists, validation, redaction, correlation, and uncertainty handling.
 
 ## Limitations
 
-- The current bar widget is intentionally inert and has no panel yet.
-- Hermes runtime RPC and end-to-end task submission are **unsupported** because
-  they have not been verified.
+- The current bar widget uses a one-shot task submission flow; completion
+  streaming and approval UI are not implemented.
 - `openChat`, streaming, approvals, clarify flows, cancellation, and completion
   tracking are not implemented.
 - The offline adapter fixture is not a live Hermes adapter.
 - The standalone QML harness is not the bar entry point and does not prove live
   layer-shell, theme, multi-monitor, focus, AT-SPI, or Glass Bar behavior.
-- No automatic activation or task submission occurs.
+- The plugin does not automatically start Hermes or submit tasks.
 
 ## Roadmap
 

@@ -52,7 +52,7 @@ async def discover_gateway() -> tuple[str, dict[str, Any]]:
             response = await run_url(url)
             if isinstance(response, dict) and isinstance(response.get("profiles"), list):
                 return url, response
-        except (HermesTransportError, OSError, RuntimeError, TypeError, ValueError):
+        except Exception:
             continue
     raise HermesTransportError("Hermes gateway unavailable.")
 
@@ -72,9 +72,11 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
         if not url:
             url, result = await discover_gateway()
         else:
-            validate_gateway_url(url)
-            transport = HermesWebSocketTransport(url)
-            result = await transport.list_profiles()
+            try:
+                validate_gateway_url(url)
+                result = await run_url(url)
+            except Exception:
+                url, result = await discover_gateway()
         # Allowlist: profiles.list and profiles.get_asset only.
         if args.profile:
             transport = HermesWebSocketTransport(url)
