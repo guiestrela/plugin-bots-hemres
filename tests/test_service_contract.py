@@ -47,7 +47,8 @@ class ServiceContractTests(unittest.TestCase):
         self.assertIn("service:", self.panel)
         self.assertIn("profiles:", self.panel)
         self.assertIn("selectedProfile", self.panel)
-        self.assertIn("enabled: true", self.panel)
+        self.assertIn("enabled: !(", self.panel)
+        self.assertIn("panel.pendingProfile === model.profileName)", self.panel)
         self.assertIn("delegateRequest", self.panel)
 
 

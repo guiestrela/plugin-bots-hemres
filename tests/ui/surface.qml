@@ -114,6 +114,13 @@ ShellRoot {
                     harness.check(harness.panel.implicitHeight >= harness.panel.layoutHeight,
                         "panel height contains roster and editor");
                 });
+                var responseDisplay = pAll.find(o => o.visible && o.placeholderText !== undefined
+                    && (String(o.placeholderText).indexOf("Bot response will appear here") >= 0
+                        || String(o.placeholderText).indexOf("O retorno do bot aparecerá aqui") >= 0));
+                harness.check(!responseDisplay, "bot response is not displayed in the inline editor");
+                var clearResponseControl = pAll.find(o => o.visible && o.text !== undefined
+                    && (String(o.text) === "Clear" || String(o.text) === "Limpar"));
+                harness.check(!clearResponseControl, "response clear button is not displayed");
                 harness.field = pAll.find(o => o.visible && o.placeholderText !== undefined
                     && (String(o.placeholderText).indexOf("Descreva a tarefa") >= 0
                         || String(o.placeholderText).indexOf("Describe the task") >= 0));

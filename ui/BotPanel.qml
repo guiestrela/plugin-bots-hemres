@@ -74,7 +74,7 @@ Item {
         : 0
 
     property real selectedEditorHeight: selectedProfile.length > 0
-        ? 58 + 72 + Style.spacing.controlHeight + OmarchyTokens.compactSpacing * 3
+        ? 58 + Style.spacing.controlHeight + OmarchyTokens.compactSpacing * 2
         : 0
     property real layoutHeight: content.implicitHeight
 
@@ -418,39 +418,6 @@ Item {
                         }
                         Accessible.name: I18n.text("Task for %1", "Tarefa para %1").arg(model.displayName)
                     }
-                    ScrollView {
-                        id: responseScroll
-                        Layout.fillWidth: true
-                        Layout.minimumHeight: 72
-                        Layout.maximumHeight: 180
-                        Layout.preferredHeight: Math.max(72, Math.min(180, responseField.contentHeight))
-                        ScrollBar.vertical: ScrollBar {
-                            policy: ScrollBar.AsNeeded
-                        }
-                        TextArea {
-                        id: responseField
-                        text: panel.responseFor(model.profileName)
-                        readOnly: true
-                        enabled: true
-                        wrapMode: TextArea.Wrap
-                        placeholderText: I18n.text("Bot response will appear here", "O retorno do bot aparecerá aqui")
-                        font.family: OmarchyTokens.fontFamily
-                        font.pixelSize: OmarchyTokens.fontBodySmall
-                        leftPadding: OmarchyTokens.spacing
-                        rightPadding: OmarchyTokens.spacing
-                        topPadding: OmarchyTokens.compactSpacing
-                        bottomPadding: OmarchyTokens.compactSpacing
-                        background: BorderSurface {
-                            radius: Style.cornerRadius
-                            color: Style.controlFill(responseField.activeFocus, responseField.hovered,
-                                                      Color.popups.text, Color.accent)
-                            borderSpec: Border.controlSpec(responseField.activeFocus ? "focus"
-                                                           : (responseField.hovered ? "hover-cursor" : "normal"),
-                                                           Color.popups.text, Color.accent)
-                        }
-                        Accessible.name: I18n.text("Response from %1", "Retorno de %1").arg(model.displayName)
-                    }
-                    }
                     RowLayout {
                         Layout.fillWidth: true
                         spacing: OmarchyTokens.compactSpacing
@@ -500,41 +467,6 @@ Item {
                             panel.selectedProfile = model.profileName
                             panel.delegate()
                         }
-                    }
-                    BorderSurface {
-                        id: clearResponseButton
-                        property bool isHovered: clearResponseMouse.containsMouse
-                        property bool isPressed: clearResponseMouse.pressed
-                        property string text: I18n.text("Clear", "Limpar")
-                        visible: panel.responseFor(model.profileName).length > 0
-                                  || (panel.pendingProfile === model.profileName && panel.delegationMessage.length > 0)
-                        enabled: panel.delegationState !== "running"
-                        implicitWidth: clearResponseLabel.implicitWidth + Style.spacing.controlPaddingX * 2
-                        implicitHeight: Style.spacing.controlHeight
-                        radius: Style.cornerRadius
-                        color: Style.controlFill(activeFocus, isHovered || isPressed, Color.popups.text, Color.accent)
-                        borderSpec: Border.controlSpec(activeFocus ? "focus" : (isHovered || isPressed ? "hover-cursor" : "normal"), Color.popups.text, Color.accent)
-                        Text {
-                            id: clearResponseLabel
-                            anchors.centerIn: parent
-                            text: clearResponseButton.text
-                            color: Color.popups.text
-                            font.family: Style.font.family
-                            font.pixelSize: Style.font.body
-                        }
-                        MouseArea {
-                            id: clearResponseMouse
-                            anchors.fill: parent
-                            enabled: clearResponseButton.enabled
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: clearResponseButton.clicked()
-                        }
-                        signal clicked()
-                        Accessible.role: Accessible.Button
-                        Accessible.name: I18n.text("Clear bot response for %1", "Limpar retorno do bot %1").arg(model.displayName)
-                        Layout.alignment: Qt.AlignRight
-                        onClicked: panel.clearResponse(model.profileName)
                     }
                     }
                     Label {
