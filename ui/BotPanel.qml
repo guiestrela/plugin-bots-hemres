@@ -20,7 +20,7 @@ Item {
     property string taskText: ""
 
     implicitWidth: 360
-    implicitHeight: Math.min(560, content.implicitHeight + OmarchyTokens.spacing * 2)
+    implicitHeight: 560
 
     function profileValue(profile, snake, camel, fallback) {
         if (!profile)
@@ -50,9 +50,17 @@ Item {
         return allowed.indexOf(value) >= 0 ? value : fallbackAvatarShape(index)
     }
 
-    function profileMeta(profile) {
-        var meta = profile && profile.ui_meta && profile.ui_meta["hermes-bots"]
-        return meta && typeof meta === "object" ? meta : {}
+    function referenceAvatar(profile, index) {
+        var name = String(profileValue(profile, "name", "id", "")).toLowerCase()
+        var styles = {
+            "default": {shape: "tablet", color: "#8f4ee8"},
+            "cto": {shape: "blob", color: "#8f4ee8"},
+            "backend": {shape: "hex", color: "#c9dbcb"},
+            "frontend": {shape: "circle", color: "#d94aa7"},
+            "assistente-sistema": {shape: "hex", color: "#84d957"},
+            "pentester": {shape: "teardrop", color: "#4bc7e7"}
+        }
+        return styles[name] || {shape: fallbackAvatarShape(index), color: fallbackAvatarColor(index)}
     }
 
     function rebuildProfiles() {
@@ -61,15 +69,15 @@ Item {
             var profile = profiles[i]
             var name = profileValue(profile, "name", "id", "profile-" + i)
             var displayName = profileValue(profile, "display_name", "displayName", name)
-            var meta = profileMeta(profile)
+            var avatar = referenceAvatar(profile, i)
             profileModel.append({
                 profileName: name,
                 displayName: displayName,
                 description: profileValue(profile, "description", "description", I18n.text("Description not provided", "Descrição não informada")),
                 hasAvatar: Boolean(profile && (profile.has_avatar || profile.hasAvatar)),
                 avatarSource: profileValue(profile, "avatar", "avatarSource", ""),
-                avatarShape: normalizedAvatarShape(meta.shape, i),
-                avatarColor: meta.color || fallbackAvatarColor(i)
+                avatarShape: avatar.shape,
+                avatarColor: avatar.color
             })
         }
         if (profileModel.count === 0)
@@ -150,8 +158,8 @@ Item {
             keyNavigationEnabled: true
             Layout.fillWidth: true
             // Reserve complete rows; larger rosters scroll in a bounded area.
-            Layout.preferredHeight: Math.min(contentHeight, 340)
-            Layout.fillHeight: true
+            Layout.preferredHeight: 340
+            Layout.fillHeight: false
             Accessible.role: Accessible.List
             Accessible.name: I18n.text("Hermes profiles", "Perfis Hermes")
             ScrollBar.vertical: ScrollBar {

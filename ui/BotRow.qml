@@ -14,7 +14,7 @@ ItemDelegate {
     property color avatarFill: OmarchyTokens.accent
     property bool selected: false
 
-    implicitHeight: 56
+    implicitHeight: 68
     highlighted: selected
     Accessible.role: Accessible.ListItem
     Accessible.name: qsTr("%1, %2").arg(botName).arg(botRole.length > 0 ? botRole : I18n.text("role not provided", "função não informada"))
