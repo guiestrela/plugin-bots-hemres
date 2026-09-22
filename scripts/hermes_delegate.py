@@ -17,7 +17,8 @@ async def run(payload: dict[str, Any]) -> dict[str, Any]:
     url = payload.get("url")
     profile = payload.get("profile")
     text = payload.get("text")
-    if not isinstance(url, str) or not isinstance(profile, str) or not isinstance(text, str):
+    if (not isinstance(url, str) or not isinstance(profile, str) or not isinstance(text, str)
+            or not url or not profile or not text.strip() or "\x00" in text):
         return {"ok": False, "error": "invalid_request"}
     validate_gateway_url(url)
     transport = HermesWebSocketTransport(url)
