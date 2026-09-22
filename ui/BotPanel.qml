@@ -325,8 +325,8 @@ Item {
                                 })
                         }
                         placeholderText: I18n.text("Describe the task…", "Descreva a tarefa…")
-                        readOnly: false
-                        enabled: true
+                        readOnly: panel.delegationState === "running" && panel.pendingProfile === model.profileName
+                        enabled: !(panel.delegationState === "running" && panel.pendingProfile === model.profileName)
                         selectByMouse: true
                         persistentSelection: true
                         wrapMode: TextArea.Wrap
