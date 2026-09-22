@@ -256,7 +256,7 @@ Item {
                 }
             }
         }
-        onStarted: write(JSON.stringify({url: panel.gatewayUrl, profile: panel.selectedProfile, text: panel.taskText}))
+        onStarted: write(JSON.stringify({url: panel.gatewayUrl, profile: panel.selectedProfile, text: panel.taskText}) + "\n")
         onExited: if (exitCode !== 0 && panel.delegationState === "running") {
             panel.delegationState = "error"
             panel.delegationMessage = I18n.text("Gateway unavailable.", "Gateway indisponível.")

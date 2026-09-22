@@ -31,7 +31,7 @@ async def run(payload: dict[str, Any]) -> dict[str, Any]:
 
 def main() -> int:
     try:
-        payload = json.loads(sys.stdin.read())
+        payload = json.loads(sys.stdin.readline())
         result = asyncio.run(run(payload))
     except HermesTransportError:
         result = {"ok": False, "error": "gateway_unavailable"}
