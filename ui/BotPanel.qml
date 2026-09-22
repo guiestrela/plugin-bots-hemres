@@ -209,7 +209,7 @@ Item {
             visible: panel.viewState === "ready" && profileModel.count > 0
             title: I18n.text("Delegate task", "Delegar tarefa")
             Layout.fillWidth: true
-            enabled: panel.viewState === "ready"
+            enabled: true
             implicitHeight: delegateLayout.implicitHeight + 48
             ColumnLayout {
                 id: delegateLayout
@@ -222,7 +222,9 @@ Item {
                     onTextChanged: panel.taskText = text
                     placeholderText: I18n.text("Describe the task…", "Descreva a tarefa…")
                     readOnly: false
-                    enabled: panel.delegationState !== "running"
+                    enabled: true
+                    selectByMouse: true
+                    persistentSelection: true
                     Layout.fillWidth: true
                     Layout.preferredHeight: 58
                     Accessible.name: qsTr("Texto da delegação desabilitado")
