@@ -316,6 +316,14 @@ Item {
                                 panel.taskText = text
                         }
                         activeFocusOnPress: true
+                        focus: panel.selectedProfile === model.profileName
+                        onFocusChanged: {
+                            if (focus)
+                                Qt.callLater(function() {
+                                    forceActiveFocus()
+                                    cursorPosition = length
+                                })
+                        }
                         placeholderText: I18n.text("Describe the task…", "Descreva a tarefa…")
                         readOnly: false
                         enabled: true
