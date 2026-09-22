@@ -149,6 +149,8 @@ BarWidget {
             selectedProfile: root.selectedProfile
             viewState: root.adapterState
             errorMessage: root.adapterError
+            gatewayUrl: root.gatewayUrl
+            pythonExecutable: root.pythonExecutable
         }
     }
 }

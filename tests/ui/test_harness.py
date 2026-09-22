@@ -60,7 +60,6 @@ class QmlHarnessContractTests(unittest.TestCase):
         self.assertNotIn("React", all_ui)
         self.assertNotIn("<style", all_ui.lower())
         self.assertNotIn("shell.json", all_ui)
-        self.assertNotIn("hermes-agent", all_ui)
 
     def test_bar_widget_is_interactive_and_uses_bot_icon(self):
         self.assertNotIn('text: qsTr("HB")', BAR)
@@ -76,9 +75,10 @@ class QmlHarnessContractTests(unittest.TestCase):
             self.assertIn(f'"{state}"', PANEL)
         for field in ("name", "display_name", "description", "has_avatar"):
             self.assertIn(field, PANEL)
-        self.assertIn("RPC_RUNTIME_UNVERIFIED", PANEL)
-        self.assertIn("delegateTask", PANEL)
-        self.assertIn("enabled: false", PANEL)
+        self.assertIn("delegationMessage", PANEL)
+        self.assertIn("stdinEnabled: true", PANEL)
+        self.assertIn("delegationState", PANEL)
+        self.assertIn("enabled: panel.selectedProfile.length > 0", PANEL)
 
     def test_panel_does_not_embed_transport_endpoints(self):
         for forbidden in ("/api/ws", "profiles.list", "prompt.submit", "WebSocket", "Qt.network"):

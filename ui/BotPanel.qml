@@ -1,6 +1,7 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
+import Quickshell.Io
 
 Item {
     id: panel
@@ -12,8 +13,11 @@ Item {
     property string viewState: "error"
     property string errorMessage: I18n.text("Adapter not connected.", "Adaptador não conectado.")
     property string selectedProfile: ""
-    property bool delegationEnabled: false
-    property string delegateTask: "unsupported"
+    property string gatewayUrl: ""
+    property string pythonExecutable: "/home/guiestrela/.hermes/hermes-agent/venv/bin/python3"
+    property string delegationState: "idle"
+    property string delegationMessage: ""
+    property string taskText: ""
 
     implicitWidth: 360
     implicitHeight: Math.min(560, content.implicitHeight + OmarchyTokens.spacing * 2)
@@ -38,6 +42,14 @@ Item {
         return palette[index % palette.length]
     }
 
+    function normalizedAvatarShape(shape, index) {
+        var value = String(shape || "")
+        if (value.indexOf("::") >= 0)
+            value = value.split("::").pop()
+        var allowed = ["squircle", "circle", "hex", "cloud", "teardrop", "tablet", "blob"]
+        return allowed.indexOf(value) >= 0 ? value : fallbackAvatarShape(index)
+    }
+
     function profileMeta(profile) {
         var meta = profile && profile.ui_meta && profile.ui_meta["hermes-bots"]
         return meta && typeof meta === "object" ? meta : {}
@@ -56,8 +68,8 @@ Item {
                 description: profileValue(profile, "description", "description", I18n.text("Description not provided", "Descrição não informada")),
                 hasAvatar: Boolean(profile && (profile.has_avatar || profile.hasAvatar)),
                 avatarSource: profileValue(profile, "avatar", "avatarSource", ""),
-                avatarShape: fallbackAvatarShape(i),
-                avatarColor: fallbackAvatarColor(i)
+                avatarShape: normalizedAvatarShape(meta.shape, i),
+                avatarColor: meta.color || fallbackAvatarColor(i)
             })
         }
         if (profileModel.count === 0)
@@ -171,33 +183,75 @@ Item {
             visible: panel.viewState === "ready" && profileModel.count > 0
             title: I18n.text("Delegate task", "Delegar tarefa")
             Layout.fillWidth: true
-            enabled: false
-            Accessible.name: qsTr("Delegação desabilitada")
+            enabled: panel.viewState === "ready"
+            Accessible.name: I18n.text("Delegate task", "Delegar tarefa")
             ColumnLayout {
                 anchors.fill: parent
                 TextArea {
-                    placeholderText: I18n.text("Available when RPC adapter is verified", "Disponível quando o adapter RPC for verificado")
-                    readOnly: true
-                    enabled: false
+                    text: panel.taskText
+                    onTextChanged: panel.taskText = text
+                    placeholderText: I18n.text("Describe the task…", "Descreva a tarefa…")
+                    readOnly: false
+                    enabled: panel.delegationState !== "running"
                     Layout.fillWidth: true
                     Layout.preferredHeight: 58
                     Accessible.name: qsTr("Texto da delegação desabilitado")
                 }
                 Button {
-                    text: I18n.text("Delegate (unavailable)", "Delegar (indisponível)")
-                    enabled: false
-                    Accessible.name: qsTr("Delegar tarefa — RPC_RUNTIME_UNVERIFIED")
-                    Accessible.description: qsTr("Nenhum prompt é enviado pelo painel.")
+                    text: panel.delegationState === "running"
+                          ? I18n.text("Sending…", "Enviando…")
+                          : I18n.text("Delegate", "Delegar")
+                    enabled: panel.selectedProfile.length > 0 && panel.taskText.trim().length > 0
+                              && panel.delegationState !== "running"
+                    Accessible.name: I18n.text("Delegate task", "Delegar tarefa")
                     Layout.alignment: Qt.AlignRight
+                    onClicked: panel.delegate()
                 }
                 Label {
-                    text: I18n.text("RPC_RUNTIME_UNVERIFIED — visual selection only; transport not connected.", "RPC_RUNTIME_UNVERIFIED — seleção visual apenas; transporte não conectado.")
+                    text: panel.delegationMessage
+                    visible: text.length > 0
                     textFormat: Text.PlainText
                     color: OmarchyTokens.mutedText
                     wrapMode: Text.WordWrap
                     Layout.fillWidth: true
                 }
             }
+        }
+    }
+
+    function delegate() {
+        delegationState = "running"
+        delegationMessage = I18n.text("Creating session and sending task…", "Criando sessão e enviando tarefa…")
+        delegateRequest.command = [pythonExecutable, delegateFile]
+        delegateRequest.running = true
+    }
+
+    readonly property string delegateFile: decodeURIComponent(Qt.resolvedUrl("../scripts/hermes_delegate.py").toString().replace(/^file:\/\//, ""))
+
+    Process {
+        id: delegateRequest
+        stdinEnabled: true
+        stdout: StdioCollector {
+            waitForEnd: true
+            onStreamFinished: {
+                try {
+                    var response = JSON.parse(text)
+                    delegationState = response.ok ? "submitted" : "error"
+                    delegationMessage = response.ok
+                        ? I18n.text("Task submitted.", "Tarefa enviada.")
+                        : I18n.text("Delegation failed: " + response.error, "Falha na delegação: " + response.error)
+                    if (response.ok)
+                        taskText = ""
+                } catch (error) {
+                    delegationState = "error"
+                    delegationMessage = I18n.text("Invalid delegation response.", "Resposta de delegação inválida.")
+                }
+            }
+        }
+        onStarted: write(JSON.stringify({url: panel.gatewayUrl, profile: panel.selectedProfile, text: panel.taskText}))
+        onExited: if (exitCode !== 0 && panel.delegationState === "running") {
+            panel.delegationState = "error"
+            panel.delegationMessage = I18n.text("Gateway unavailable.", "Gateway indisponível.")
         }
     }
 }

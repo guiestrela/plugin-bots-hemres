@@ -88,7 +88,7 @@ ShellRoot {
                 harness.check(rows.every(r => r && r.botName.indexOf("SYNTHETIC") === 0 && r.height >= r.implicitHeight
                     && r.y >= harness.list.contentY && r.y + r.height <= harness.list.contentY + harness.list.height),
                     "two explicitly synthetic rows fully inside viewport");
-                harness.check(harness.panel.delegationEnabled === false, "delegation remains disabled");
+                harness.check(harness.panel.delegationState === "idle", "delegation starts idle");
                 harness.trigger.triggerPress(Qt.LeftButton);
             } else if (harness.phase === 2) {
                 harness.check(!harness.widget.panelOpen && !harness.surface.visible, "trigger closes panel after fade");
