@@ -105,12 +105,36 @@ Item {
         return allowed.indexOf(value) >= 0 ? value : fallbackAvatarShape(index)
     }
 
+    function colorFromMetadata(value, index) {
+        var raw = String(value || "")
+        var match = /^hsl\(\s*([-+]?\d+(?:\.\d+)?)\s+([-+]?\d+(?:\.\d+)?)%\s+([-+]?\d+(?:\.\d+)?)%\s*\)$/i.exec(raw)
+        if (!match)
+            return raw || fallbackAvatarColor(index)
+        var h = ((parseFloat(match[1]) % 360) + 360) % 360 / 360
+        var s = Math.max(0, Math.min(1, parseFloat(match[2]) / 100))
+        var l = Math.max(0, Math.min(1, parseFloat(match[3]) / 100))
+        var c = (1 - Math.abs(2 * l - 1)) * s
+        var x = c * (1 - Math.abs((h * 6) % 2 - 1))
+        var m = l - c / 2
+        var r = 0, g = 0, b = 0
+        if (h < 1 / 6) { r = c; g = x }
+        else if (h < 2 / 6) { r = x; g = c }
+        else if (h < 3 / 6) { g = c; b = x }
+        else if (h < 4 / 6) { g = x; b = c }
+        else if (h < 5 / 6) { r = x; b = c }
+        else { r = c; b = x }
+        function hex(channel) {
+            return Math.round((channel + m) * 255).toString(16).padStart(2, "0")
+        }
+        return "#" + hex(r) + hex(g) + hex(b)
+    }
+
     function metadataAvatar(profile, index) {
         var meta = profile && profile.ui_meta && profile.ui_meta["hermes-bots"]
         if (meta && meta.custom === true && meta.shape)
             return {
                 shape: normalizedAvatarShape(meta.shape, index),
-                color: String(meta.color || fallbackAvatarColor(index))
+                color: colorFromMetadata(meta.color, index)
             }
         return null
     }
