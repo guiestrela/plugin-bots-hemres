@@ -16,6 +16,7 @@ BarWidget {
     property var settings: null
     property string pluginDir: ""
     property string gatewayUrl: settings && settings.gatewayUrl ? String(settings.gatewayUrl) : ""
+    property string pythonExecutable: settings && settings.pythonExecutable ? String(settings.pythonExecutable) : "/home/guiestrela/.hermes/hermes-agent/venv/bin/python3"
     property var profiles: rosterProfiles
     property string adapterState: rosterLoading ? "loading" : rosterError.length > 0 ? "error" : rosterProfiles.length > 0 ? "ready" : "empty"
     property string adapterError: rosterError
@@ -34,14 +35,23 @@ BarWidget {
             return
         rosterLoading = true
         rosterError = ""
-        rosterRequest.command = ["python3", helperFile, "--url", gatewayUrl]
+        rosterRequest.command = [pythonExecutable, helperFile, "--url", gatewayUrl]
         rosterRequest.running = true
     }
 
     function acceptRoster(raw) {
         try {
             var response = JSON.parse(raw)
-            if (response.ok && response.kind === "profiles" && Array.isArray(response.profiles)) {
+            if (!response.ok) {
+                if (response.error === "gateway_unavailable")
+                    rosterError = I18n.text("Hermes gateway unavailable.", "Gateway Hermes indisponível.")
+                else if (response.error === "configuration_required")
+                    rosterError = I18n.text("Hermes gateway is not configured.", "Gateway Hermes não configurado.")
+                else
+                    rosterError = I18n.text("Unable to load Hermes profiles.", "Não foi possível carregar os perfis Hermes.")
+                return
+            }
+            if (response.kind === "profiles" && Array.isArray(response.profiles)) {
                 rosterProfiles = response.profiles
                 if (rosterProfiles.length > 0)
                     selectedProfile = String(rosterProfiles[0].name || rosterProfiles[0].id || "")
