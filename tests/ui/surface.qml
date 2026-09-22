@@ -99,7 +99,7 @@ ShellRoot {
                     && (String(o.placeholderText).indexOf("Descreva a tarefa") >= 0
                         || String(o.placeholderText).indexOf("Describe the task") >= 0));
                 harness.btn = pAll.find(o => typeof o.clicked === "function" && o.text !== undefined
-                    && (String(o.text).indexOf("Delegar") === 0 || String(o.text).indexOf("Delegate") === 0
+                    && (String(o.text).indexOf("➤") === 0 || String(o.text).indexOf("Delegar") === 0 || String(o.text).indexOf("Delegate") === 0
                         || String(o.text).indexOf("Enviando") === 0 || String(o.text).indexOf("Sending") === 0));
                 if (!harness.field || !harness.btn) {
                     console.log("PBH_FATAL cannot locate task field/button"); Qt.quit(); return;
@@ -118,6 +118,8 @@ ShellRoot {
                 harness.field.text = "tarefa de teste";
                 harness.check(harness.field.text === "tarefa de teste" && harness.panel.taskText === "tarefa de teste",
                     "typing into task field syncs panel.taskText");
+                harness.check(String(harness.btn.text).indexOf("➤") === 0,
+                    "Delegate button uses send symbol");
                 harness.btn.clicked();
                 console.log("PBH_DELEGATE " + JSON.stringify({btnText: harness.btn.text,
                     state: harness.panel.delegationState, msg: harness.panel.delegationMessage}));

@@ -438,7 +438,7 @@ Item {
                     BorderSurface {
                         id: delegateButton
                         property bool isSending: panel.delegationState === "running" && panel.pendingProfile === model.profileName
-                        property string text: I18n.text("Delegate", "Delegar")
+                        property string text: "➤"
                         property bool isHovered: delegateMouse.containsMouse
                         property bool isPressed: delegateMouse.pressed
                         signal clicked()
@@ -455,7 +455,8 @@ Item {
                             visible: !delegateButton.isSending
                             color: Color.popups.text
                             font.family: Style.font.family
-                            font.pixelSize: Style.font.body
+                            font.pixelSize: Style.font.subtitle
+                            font.bold: true
                         }
                         BusyIndicator {
                             anchors.centerIn: parent
