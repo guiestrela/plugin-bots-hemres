@@ -67,12 +67,16 @@ ShellRoot {
                     autoRefreshRoster: false,
                     rosterProfiles: [
                         {name: "synthetic-a", display_name: "SYNTHETIC A — not a real bot", description: "UI regression fixture"},
-                        {name: "synthetic-b", display_name: "SYNTHETIC B — not a real bot", description: "UI regression fixture"}
+                        {name: "synthetic-b", display_name: "SYNTHETIC B — not a real bot", description: "UI regression fixture"},
+                        {name: "synthetic-c", display_name: "SYNTHETIC C — not a real bot", description: "UI regression fixture"},
+                        {name: "synthetic-d", display_name: "SYNTHETIC D — not a real bot", description: "UI regression fixture"},
+                        {name: "synthetic-e", display_name: "SYNTHETIC E — not a real bot", description: "UI regression fixture"},
+                        {name: "synthetic-f", display_name: "SYNTHETIC F — not a real bot", description: "UI regression fixture"}
                     ]});
                 var all = harness.objects(harness.widget);
                 harness.trigger = all.find(o => typeof o.triggerPress === "function");
                 harness.panel = all.find(o => typeof o.rebuildProfiles === "function");
-                harness.list = all.find(o => o.keyNavigationEnabled !== undefined);
+                harness.list = all.find(o => o.rosterContainer === true);
                 harness.surface = all.find(o => o.anchorItem !== undefined && o.open !== undefined)
                     || all.find(o => o.popupType !== undefined);
                 if (!harness.trigger || !harness.panel || !harness.list || !harness.surface) {
@@ -89,7 +93,7 @@ ShellRoot {
                 harness.check(harness.list.interactive === false, "roster does not scroll");
                 harness.check(harness.list.height >= harness.list.contentHeight,
                     "roster height expands to all items");
-                var rows = [harness.list.itemAtIndex(0), harness.list.itemAtIndex(1)];
+                var rows = [harness.list.itemAtIndex(0), harness.list.itemAtIndex(1), harness.list.itemAtIndex(5)];
                 var rowControls = rows.map(r => r && r.botName !== undefined ? r : (r && r.children ? r.children.find(c => c.botName !== undefined) : null));
                 console.log("PBH_GEOMETRY " + JSON.stringify({barHeight: barWindow.height, panelHeight: window ? window.height : null,
                     listHeight: harness.list.height, rows: rowControls.map(r => r ? {name: r.botName, y: r.y, height: r.height} : null)}));
@@ -97,12 +101,20 @@ ShellRoot {
                     && r.y >= harness.list.contentY && r.y + r.height <= harness.list.contentY + harness.list.height),
                     "two explicitly synthetic rows fully inside viewport");
                 harness.check(harness.panel.delegationState === "idle", "delegation starts idle");
-                rowControls[0].clicked();
-                harness.check(harness.panel.layoutHeight > harness.list.height,
-                    "panel layout includes the selected editor");
-                harness.check(harness.panel.implicitHeight >= harness.panel.layoutHeight,
-                    "panel height contains roster and editor");
-                harness.field = pAll.find(o => o.placeholderText !== undefined
+                rowControls[2].clicked();
+                harness.check(harness.panel.selectedEditorHeight > 0,
+                    "selected editor reserves input and response space");
+                Qt.callLater(function() {
+                    harness.check(harness.list.height > harness.panel.rosterHeight,
+                        "list reserves space below the last bot for the editor");
+                    harness.check(harness.list.height >= harness.list.contentHeight || harness.list.contentHeight === harness.list.implicitHeight,
+                        "list expands for the selected editor");
+                    harness.check(harness.panel.implicitHeight >= harness.list.height,
+                        "panel height includes the selected editor");
+                    harness.check(harness.panel.implicitHeight >= harness.panel.layoutHeight,
+                        "panel height contains roster and editor");
+                });
+                harness.field = pAll.find(o => o.visible && o.placeholderText !== undefined
                     && (String(o.placeholderText).indexOf("Descreva a tarefa") >= 0
                         || String(o.placeholderText).indexOf("Describe the task") >= 0));
                 harness.btn = pAll.find(o => typeof o.clicked === "function" && o.text !== undefined

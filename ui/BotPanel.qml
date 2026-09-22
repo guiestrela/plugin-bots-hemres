@@ -73,10 +73,13 @@ Item {
         ? profileModel.count * 68 + Math.max(0, profileModel.count - 1) * OmarchyTokens.compactSpacing
         : 0
 
+    property real selectedEditorHeight: selectedProfile.length > 0
+        ? 58 + 72 + Style.spacing.controlHeight + OmarchyTokens.compactSpacing * 3
+        : 0
     property real layoutHeight: content.implicitHeight
 
     implicitWidth: 360
-    implicitHeight: layoutHeight + OmarchyTokens.spacing * 2
+    implicitHeight: Math.max(layoutHeight, profileList.height) + OmarchyTokens.spacing * 2
 
     function profileValue(profile, snake, camel, fallback) {
         if (!profile)
@@ -302,21 +305,31 @@ Item {
             Accessible.name: text
         }
 
-        ListView {
+        ColumnLayout {
             id: profileList
+            property bool rosterContainer: true
+            property bool interactive: false
+            property real contentY: 0
+            property real contentHeight: implicitHeight
+            function itemAtIndex(index) { return profileRepeater.itemAt(index) }
             visible: panel.viewState === "ready" && profileModel.count > 0
-            model: profileModel
-            clip: true
             spacing: OmarchyTokens.compactSpacing
-            interactive: false
+            height: panel.rosterHeight + panel.selectedEditorHeight
             Layout.fillWidth: true
-            Layout.preferredHeight: panel.rosterHeight
-            Layout.minimumHeight: panel.rosterHeight
-            Layout.maximumHeight: panel.rosterHeight
+            Layout.preferredHeight: panel.rosterHeight + panel.selectedEditorHeight
+            Layout.minimumHeight: panel.rosterHeight + panel.selectedEditorHeight
+            Layout.maximumHeight: panel.rosterHeight + panel.selectedEditorHeight
             Accessible.role: Accessible.List
             Accessible.name: I18n.text("Hermes profiles", "Perfis Hermes")
-            delegate: ColumnLayout {
+            Repeater {
+                id: profileRepeater
+                model: profileModel
+                delegate: ColumnLayout {
+                id: profileDelegate
                 width: profileList.width
+                implicitHeight: botRow.implicitHeight
+                    + (inlineEditor.visible
+                       ? panel.selectedEditorHeight + OmarchyTokens.compactSpacing : 0)
                 spacing: OmarchyTokens.compactSpacing
                 BotRow {
                     id: botRow
@@ -346,10 +359,14 @@ Item {
                     }
                 }
                 ColumnLayout {
+                    id: inlineEditor
                     visible: panel.selectedProfile === model.profileName
                     Layout.fillWidth: true
                     Layout.leftMargin: OmarchyTokens.spacing
                     Layout.rightMargin: OmarchyTokens.spacing
+                    Layout.preferredHeight: visible ? implicitHeight : 0
+                    Layout.minimumHeight: visible ? implicitHeight : 0
+                    Layout.maximumHeight: visible ? implicitHeight : 0
                     TextArea {
                         id: inlineTaskInput
                         text: panel.draftFor(model.profileName)
@@ -533,6 +550,7 @@ Item {
                 }
             }
         }
+    }
     }
 
     property string pendingPayload: ""
