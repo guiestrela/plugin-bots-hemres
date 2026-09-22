@@ -70,7 +70,7 @@ Item {
     }
 
     implicitWidth: 360
-    implicitHeight: selectedProfile.length > 0 ? 620 : 520
+    implicitHeight: selectedProfile.length > 0 ? 620 : 490
 
     function profileValue(profile, snake, camel, fallback) {
         if (!profile)
@@ -170,7 +170,7 @@ Item {
         id: content
         anchors.fill: parent
         anchors.margins: OmarchyTokens.spacing
-        spacing: OmarchyTokens.compactSpacing
+        spacing: Math.max(4, OmarchyTokens.compactSpacing / 2)
 
         RowLayout {
             Layout.fillWidth: true
@@ -395,9 +395,8 @@ Item {
                         spacing: OmarchyTokens.compactSpacing
                     BorderSurface {
                         id: delegateButton
-                        property string text: panel.delegationState === "running" && panel.pendingProfile === model.profileName
-                              ? I18n.text("Sending…", "Enviando…")
-                              : I18n.text("Delegate", "Delegar")
+                        property bool isSending: panel.delegationState === "running" && panel.pendingProfile === model.profileName
+                        property string text: I18n.text("Delegate", "Delegar")
                         property bool isHovered: delegateMouse.containsMouse
                         property bool isPressed: delegateMouse.pressed
                         signal clicked()
@@ -411,9 +410,18 @@ Item {
                             id: delegateLabel
                             anchors.centerIn: parent
                             text: delegateButton.text
+                            visible: !delegateButton.isSending
                             color: Color.popups.text
                             font.family: Style.font.family
                             font.pixelSize: Style.font.body
+                        }
+                        BusyIndicator {
+                            anchors.centerIn: parent
+                            width: Style.font.body
+                            height: Style.font.body
+                            visible: delegateButton.isSending
+                            running: visible
+                            Accessible.name: I18n.text("Sending", "Enviando")
                         }
                         MouseArea {
                             id: delegateMouse
