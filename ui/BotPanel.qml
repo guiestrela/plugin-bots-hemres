@@ -342,7 +342,14 @@ Item {
                         }
                         Accessible.name: I18n.text("Task for %1", "Tarefa para %1").arg(model.displayName)
                     }
-                    TextArea {
+                    ScrollView {
+                        id: responseScroll
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 72
+                        ScrollBar.vertical: ScrollBar {
+                            policy: ScrollBar.AsNeeded
+                        }
+                        TextArea {
                         id: responseField
                         text: panel.responseFor(model.profileName)
                         readOnly: true
@@ -351,8 +358,6 @@ Item {
                         placeholderText: I18n.text("Bot response will appear here", "O retorno do bot aparecerá aqui")
                         font.family: OmarchyTokens.fontFamily
                         font.pixelSize: OmarchyTokens.fontBodySmall
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 72
                         leftPadding: OmarchyTokens.spacing
                         rightPadding: OmarchyTokens.spacing
                         topPadding: OmarchyTokens.compactSpacing
@@ -366,6 +371,7 @@ Item {
                                                            Color.popups.text, Color.accent)
                         }
                         Accessible.name: I18n.text("Response from %1", "Retorno de %1").arg(model.displayName)
+                    }
                     }
                     RowLayout {
                         Layout.fillWidth: true
