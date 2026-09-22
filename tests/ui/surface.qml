@@ -86,6 +86,9 @@ ShellRoot {
                 var window = harness.panel.QsWindow.window;
                 harness.check(window && window !== barWindow && window.height > 26,
                               "independent panel window taller than 26px bar");
+                harness.check(harness.list.interactive === false, "roster does not scroll");
+                harness.check(harness.list.height >= harness.list.contentHeight,
+                    "roster height expands to all items");
                 var rows = [harness.list.itemAtIndex(0), harness.list.itemAtIndex(1)];
                 var rowControls = rows.map(r => r && r.botName !== undefined ? r : (r && r.children ? r.children.find(c => c.botName !== undefined) : null));
                 console.log("PBH_GEOMETRY " + JSON.stringify({barHeight: barWindow.height, panelHeight: window ? window.height : null,

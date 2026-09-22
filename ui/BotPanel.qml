@@ -69,8 +69,12 @@ Item {
         // The task editor is owned by the selected ListView delegate.
     }
 
+    property real rosterHeight: profileModel.count > 0
+        ? profileModel.count * 68 + Math.max(0, profileModel.count - 1) * OmarchyTokens.compactSpacing
+        : 0
+
     implicitWidth: 360
-    implicitHeight: selectedProfile.length > 0 ? 620 : 490
+    implicitHeight: (selectedProfile.length > 0 ? 280 : 150) + rosterHeight
 
     function profileValue(profile, snake, camel, fallback) {
         if (!profile)
@@ -302,17 +306,13 @@ Item {
             model: profileModel
             clip: true
             spacing: OmarchyTokens.compactSpacing
-            focus: false
-            keyNavigationEnabled: true
+            interactive: false
             Layout.fillWidth: true
-            // Reserve complete rows; larger rosters scroll in a bounded area.
-            Layout.preferredHeight: 340
-            Layout.fillHeight: false
+            Layout.preferredHeight: panel.rosterHeight
+            Layout.minimumHeight: panel.rosterHeight
+            Layout.maximumHeight: panel.rosterHeight
             Accessible.role: Accessible.List
             Accessible.name: I18n.text("Hermes profiles", "Perfis Hermes")
-            ScrollBar.vertical: ScrollBar {
-                policy: ScrollBar.AsNeeded
-            }
             delegate: ColumnLayout {
                 width: profileList.width
                 spacing: OmarchyTokens.compactSpacing

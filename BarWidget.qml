@@ -147,7 +147,7 @@ BarWidget {
         open: root.panelOpen
         padding: 0
         contentWidth: fittedContentWidth(440)
-        contentHeight: fittedContentHeight(panelContent.implicitHeight, 620)
+        contentHeight: fittedContentHeight(panelContent.implicitHeight)
 
         BotPanel {
             id: panelContent
