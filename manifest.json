@@ -5,7 +5,7 @@
   "version": "0.1.0",
   "author": "Guiestrela",
   "license": "MIT",
-  "description": "Read-only Hermes bot roster with an explicit loopback gateway configuration.",
+  "description": "Hermes bot roster with explicit loopback gateway configuration and user-triggered delegation.",
   "kinds": [
   "bar-widget"
   ],
