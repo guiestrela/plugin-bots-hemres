@@ -277,7 +277,8 @@ Item {
             return
         }
         pendingTask = task
-        pendingPayload = JSON.stringify({url: gatewayUrl, profile: profile, text: pendingTask}) + "\n"
+        pendingPayload = JSON.stringify({url: gatewayUrl, profile: profile, text: pendingTask,
+            transport: "canonical-chat"}) + "\n"
         delegationState = "running"
         delegationMessage = I18n.text("Creating session and sending task…", "Criando sessão e enviando tarefa…")
         delegateExited = false
@@ -298,7 +299,7 @@ Item {
     property bool delegateExited: false
     property bool delegateOutputFinished: false
     property bool delegateStarted: false
-    property int delegationTimeoutMs: 15000
+    property int delegationTimeoutMs: 120000
     property string delegateOutput: ""
     property int delegateExitCode: -1
     property int delegateExitStatus: -1
@@ -309,19 +310,23 @@ Item {
         delegationWatchdog.stop()
         var response = null
         try { response = JSON.parse(delegateOutput) } catch (error) {}
-        // An ACK is submission, never completion. This one-shot bridge does
-        // not subscribe to completion events, so "completed" is not accepted.
         if (delegateExitCode === 0 && delegateExitStatus === 0 && response
-                && response.ok === true && response.state === "submitted"
-                && typeof response.session_id === "string" && response.session_id.length > 0) {
-            delegationState = "submitted"
-            delegationMessage = I18n.text("Sent to bot; completion not monitored by this panel.", "Enviado ao bot; este painel não acompanha a conclusão.")
-            if (taskText === pendingTask)
-                taskText = ""
+                && response.ok === true && (response.state === "completed" || response.state === "submitted")) {
+            delegationState = response.state
+            var completion = response.completion ? String(response.completion) : ""
+            delegationMessage = response.state === "completed"
+                ? (completion.length > 0
+                    ? I18n.text("Bot concluído: %1", "Bot concluído: %1").arg(completion)
+                    : I18n.text("Bot concluiu a tarefa.", "Bot concluiu a tarefa."))
+                : I18n.text("Enviado ao bot; conclusão ainda não confirmada.", "Enviado ao bot; conclusão ainda não confirmada.")
+            if (taskInput.text === pendingTask)
+                taskInput.text = ""
         } else if (delegateExitCode === 0 && delegateExitStatus === 0 && response
-                   && response.ok === false && response.state === "failed") {
-            delegationState = "failed"
-            delegationMessage = I18n.text("Task was not accepted. Check the gateway and profile before retrying.", "Tarefa não aceita. Verifique o gateway e o perfil antes de tentar novamente.")
+                   && response.ok === false && (response.state === "failed" || response.state === "delivery-uncertain")) {
+            delegationState = response.state
+            delegationMessage = response.state === "failed"
+                ? I18n.text("Bot informou falha ao executar a tarefa.", "Bot informou falha ao executar a tarefa.")
+                : I18n.text("Entrega não confirmada; confira o Bot Chat antes de reenviar.", "Entrega não confirmada; confira o Bot Chat antes de reenviar.")
         } else {
             delegationState = "delivery-uncertain"
             delegationMessage = I18n.text("Delivery not confirmed. Check Hermes before resending to avoid duplicates.", "Entrega não confirmada. Confira no Hermes antes de reenviar para evitar duplicatas.")

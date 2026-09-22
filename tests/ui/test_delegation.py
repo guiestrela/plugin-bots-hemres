@@ -24,7 +24,7 @@ class DelegationProcessTests(unittest.TestCase):
                 'import json, sys\n'
                 'payload = json.loads(sys.stdin.readline())\n'
                 'assert payload == {"url":"ws://127.0.0.1:1/api/ws", "profile":"fixture", '
-                '"text":"fixture original — not a user task"}, payload\n' +
+                '"text":"fixture original — not a user task", "transport":"canonical-chat"}, payload\n' +
                 ('import time; time.sleep(10)\n' if stall else '') +
                 'print(' + repr(response) + ', flush=True)\n' +
                 'sys.exit(' + str(exit_code) + ')\n')
@@ -40,11 +40,11 @@ class DelegationProcessTests(unittest.TestCase):
             self.assertIn("DELEGATION_RESULT 0", result.stdout)
 
     def test_unacknowledged_output_is_uncertain_not_success_or_failure(self):
-        for response, exit_code in [("", 0), ("not json", 1), ('{"ok":true}', 0),
-                                    ('{"ok":true,"state":"completed"}', 0),
-                                    ('{"ok":false,"state":"delivery-uncertain"}', 0)]:
+        for response, exit_code, expected in [("", 0, "delivery-uncertain"), ("not json", 1, "delivery-uncertain"), ('{"ok":true}', 0, "delivery-uncertain"),
+                                    ('{"ok":true,"state":"completed"}', 0, "completed"),
+                                    ('{"ok":false,"state":"delivery-uncertain"}', 0, "delivery-uncertain")]:
             with self.subTest(response=response):
-                self.run_case(response, "delivery-uncertain", exit_code)
+                self.run_case(response, expected, exit_code)
 
     def test_watchdog_stalled_helper_is_uncertain(self):
         self.run_case("", "delivery-uncertain", stall=True)
