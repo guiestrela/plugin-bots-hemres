@@ -73,8 +73,10 @@ Item {
         ? profileModel.count * 68 + Math.max(0, profileModel.count - 1) * OmarchyTokens.compactSpacing
         : 0
 
+    property real layoutHeight: content.implicitHeight
+
     implicitWidth: 360
-    implicitHeight: (selectedProfile.length > 0 ? 280 : 150) + rosterHeight
+    implicitHeight: layoutHeight + OmarchyTokens.spacing * 2
 
     function profileValue(profile, snake, camel, fallback) {
         if (!profile)

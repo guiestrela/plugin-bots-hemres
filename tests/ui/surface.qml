@@ -98,6 +98,10 @@ ShellRoot {
                     "two explicitly synthetic rows fully inside viewport");
                 harness.check(harness.panel.delegationState === "idle", "delegation starts idle");
                 rowControls[0].clicked();
+                harness.check(harness.panel.layoutHeight > harness.list.height,
+                    "panel layout includes the selected editor");
+                harness.check(harness.panel.implicitHeight >= harness.panel.layoutHeight,
+                    "panel height contains roster and editor");
                 harness.field = pAll.find(o => o.placeholderText !== undefined
                     && (String(o.placeholderText).indexOf("Descreva a tarefa") >= 0
                         || String(o.placeholderText).indexOf("Describe the task") >= 0));
