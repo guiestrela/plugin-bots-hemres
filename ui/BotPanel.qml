@@ -210,9 +210,13 @@ Item {
             title: I18n.text("Delegate task", "Delegar tarefa")
             Layout.fillWidth: true
             enabled: panel.viewState === "ready"
-            Accessible.name: I18n.text("Delegate task", "Delegar tarefa")
+            implicitHeight: delegateLayout.implicitHeight + 48
             ColumnLayout {
-                anchors.fill: parent
+                id: delegateLayout
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
                 TextArea {
                     text: panel.taskText
                     onTextChanged: panel.taskText = text
