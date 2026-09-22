@@ -227,7 +227,7 @@ Item {
                     persistentSelection: true
                     Layout.fillWidth: true
                     Layout.preferredHeight: 58
-                    Accessible.name: qsTr("Texto da delegação desabilitado")
+                    Accessible.name: I18n.text("Task to delegate", "Tarefa para delegar")
                 }
                 Button {
                     text: panel.delegationState === "running"
