@@ -329,6 +329,7 @@ Item {
                         enabled: true
                         selectByMouse: true
                         persistentSelection: true
+                        wrapMode: TextArea.Wrap
                         font.family: OmarchyTokens.fontFamily
                         font.pixelSize: OmarchyTokens.fontBody
                         Layout.fillWidth: true
