@@ -242,10 +242,15 @@ Item {
                     availability: I18n.text("loaded", "carregado")
                     selected: model.profileName === panel.selectedProfile
                     onClicked: {
-                        panel.selectedProfile = model.profileName
-                        panel.taskText = panel.draftFor(model.profileName)
-                        if (panel.service && panel.service.fetchAvatar)
-                            panel.service.fetchAvatar(model.profileName)
+                        if (panel.selectedProfile === model.profileName) {
+                            panel.selectedProfile = ""
+                            panel.taskText = ""
+                        } else {
+                            panel.selectedProfile = model.profileName
+                            panel.taskText = panel.draftFor(model.profileName)
+                            if (panel.service && panel.service.fetchAvatar)
+                                panel.service.fetchAvatar(model.profileName)
+                        }
                     }
                 }
                 ColumnLayout {
