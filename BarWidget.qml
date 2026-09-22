@@ -3,6 +3,7 @@ import QtQuick.Controls
 import Quickshell
 import Quickshell.Io
 import qs.Ui
+import qs.Commons
 import "ui"
 
 BarWidget {
@@ -60,8 +61,6 @@ BarWidget {
                 if (response.gateway_url)
                     gatewayUrl = String(response.gateway_url)
                 rosterProfiles = response.profiles
-                if (rosterProfiles.length > 0)
-                    selectedProfile = String(rosterProfiles[0].name || rosterProfiles[0].id || "")
                 return
             }
             rosterError = I18n.text("Unable to load Hermes profiles.", "Não foi possível carregar os perfis Hermes.")
@@ -85,7 +84,7 @@ BarWidget {
     onPanelOpenChanged: {
         if (autoRefreshRoster && panelOpen && (rosterProfiles.length === 0 || rosterError.length > 0))
             refreshRoster()
-        if (panelOpen)
+        if (panelOpen && panelContent.selectedProfile.length > 0)
             Qt.callLater(function() { panelContent.focusTaskInput() })
     }
 
@@ -97,7 +96,8 @@ BarWidget {
         bar: root.bar
         text: ""
         hasVisualContent: true
-        fixedWidth: 24
+        fixedWidth: vertical ? -1 : Style.bar.iconSlot
+        fixedHeight: vertical ? Style.bar.iconSlot : -1
         labelVisible: false
         tooltipText: root.tooltipText
         onPressed: function(buttonCode) {
@@ -107,8 +107,8 @@ BarWidget {
 
         Avatar {
             anchors.centerIn: parent
-            width: 18
-            height: 18
+            width: Style.bar.iconCanvas
+            height: Style.bar.iconCanvas
             shape: "squircle"
             outlined: true
             fill: root.bar ? root.bar.barForeground : "#cdd6f4"

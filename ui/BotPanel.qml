@@ -19,6 +19,35 @@ Item {
     property string delegationMessage: ""
     signal refreshRequested()
     property string taskText: ""
+    property var taskDrafts: ({})
+    property var botResponses: ({})
+    property string pendingProfile: ""
+
+    function draftFor(profile) {
+        return profile && taskDrafts[profile] !== undefined ? String(taskDrafts[profile]) : ""
+    }
+
+    function responseFor(profile) {
+        return profile && botResponses[profile] !== undefined ? String(botResponses[profile]) : ""
+    }
+
+    function setDraft(profile, value) {
+        if (!profile)
+            return
+        var next = Object.assign({}, taskDrafts)
+        next[profile] = value
+        taskDrafts = next
+        if (profile === selectedProfile)
+            taskText = value
+    }
+
+    function setResponse(profile, value) {
+        if (!profile)
+            return
+        var next = Object.assign({}, botResponses)
+        next[profile] = value
+        botResponses = next
+    }
 
     function focusTaskInput() {
         taskInput.forceActiveFocus()
@@ -95,8 +124,6 @@ Item {
         }
         if (profileModel.count === 0)
             selectedProfile = ""
-        else if (selectedProfile.length === 0 || !profileExists(selectedProfile))
-            selectedProfile = profileModel.get(0).profileName
     }
 
     function profileExists(profileName) {
@@ -209,6 +236,8 @@ Item {
                 selected: model.profileName === panel.selectedProfile
                 onClicked: {
                     panel.selectedProfile = model.profileName
+                    panel.taskText = panel.draftFor(model.profileName)
+                    panel.setResponse(model.profileName, panel.responseFor(model.profileName))
                     if (panel.service && panel.service.fetchAvatar)
                         panel.service.fetchAvatar(model.profileName)
                 }
@@ -216,8 +245,8 @@ Item {
         }
 
         GroupBox {
-            visible: panel.viewState === "ready" && profileModel.count > 0
-            title: I18n.text("Delegate task", "Delegar tarefa")
+            visible: panel.viewState === "ready" && profileModel.count > 0 && panel.selectedProfile.length > 0
+            title: I18n.text("Delegate to %1", "Delegar para %1").arg(panel.selectedProfile)
             Layout.fillWidth: true
             enabled: true
             implicitHeight: delegateLayout.implicitHeight + 48
@@ -229,9 +258,13 @@ Item {
                 anchors.bottom: parent.bottom
                 TextArea {
                     id: taskInput
-                    text: panel.taskText
-                    onTextChanged: panel.taskText = text
-                    focus: true
+                    text: panel.draftFor(panel.selectedProfile)
+                    onTextChanged: {
+                        if (panel.selectedProfile.length > 0 && text !== panel.draftFor(panel.selectedProfile))
+                            panel.setDraft(panel.selectedProfile, text)
+                        panel.taskText = text
+                    }
+                    focus: false
                     activeFocusOnPress: true
                     placeholderText: I18n.text("Describe the task…", "Descreva a tarefa…")
                     readOnly: false
@@ -240,7 +273,23 @@ Item {
                     persistentSelection: true
                     Layout.fillWidth: true
                     Layout.preferredHeight: 58
+                    Keys.onPressed: function(event) {
+                        if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                            event.accepted = true
+                            panel.delegate()
+                        }
+                    }
                     Accessible.name: I18n.text("Task to delegate", "Tarefa para delegar")
+                }
+                TextArea {
+                    text: panel.responseFor(panel.selectedProfile)
+                    readOnly: true
+                    enabled: true
+                    wrapMode: TextArea.Wrap
+                    placeholderText: I18n.text("Bot response will appear here", "O retorno do bot aparecerá aqui")
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 72
+                    Accessible.name: I18n.text("Bot response", "Retorno do bot")
                 }
                 Button {
                     text: panel.delegationState === "running"
@@ -277,6 +326,7 @@ Item {
             return
         }
         pendingTask = task
+        pendingProfile = profile
         pendingPayload = JSON.stringify({url: gatewayUrl, profile: profile, text: pendingTask,
             transport: "canonical-chat"}) + "\n"
         delegationState = "running"
@@ -319,17 +369,22 @@ Item {
                     ? I18n.text("Bot concluído: %1", "Bot concluído: %1").arg(completion)
                     : I18n.text("Bot concluiu a tarefa.", "Bot concluiu a tarefa."))
                 : I18n.text("Enviado ao bot; conclusão ainda não confirmada.", "Enviado ao bot; conclusão ainda não confirmada.")
-            if (taskInput.text === pendingTask)
+            setResponse(pendingProfile, completion.length > 0 ? completion : delegationMessage)
+            if (taskInput.text === pendingTask) {
                 taskInput.text = ""
+                setDraft(pendingProfile, "")
+            }
         } else if (delegateExitCode === 0 && delegateExitStatus === 0 && response
                    && response.ok === false && (response.state === "failed" || response.state === "delivery-uncertain")) {
             delegationState = response.state
             delegationMessage = response.state === "failed"
                 ? I18n.text("Bot informou falha ao executar a tarefa.", "Bot informou falha ao executar a tarefa.")
                 : I18n.text("Entrega não confirmada; confira o Bot Chat antes de reenviar.", "Entrega não confirmada; confira o Bot Chat antes de reenviar.")
+            setResponse(pendingProfile, delegationMessage)
         } else {
             delegationState = "delivery-uncertain"
             delegationMessage = I18n.text("Delivery not confirmed. Check Hermes before resending to avoid duplicates.", "Entrega não confirmada. Confira no Hermes antes de reenviar para evitar duplicatas.")
+            setResponse(pendingProfile, delegationMessage)
         }
         pendingTask = ""
         pendingPayload = ""

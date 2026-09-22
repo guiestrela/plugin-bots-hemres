@@ -17,16 +17,17 @@ ShellRoot {
             console.log("DELEGATION_FATAL " + component.errorString()); Qt.quit(); return
         }
         panel = component.createObject(null, {profiles: [{name: "fixture"}],
+            selectedProfile: "fixture",
             gatewayUrl: "ws://127.0.0.1:1/api/ws", pythonExecutable: "/usr/bin/python3"})
         if (!panel) { console.log("DELEGATION_FATAL create"); Qt.quit(); return }
         if (Quickshell.env("PBH_TIMEOUT")) panel.delegationTimeoutMs = 250
         if (Quickshell.env("PBH_MISSING")) panel.pythonExecutable = "/nonexistent-pbh-fixture-python"
-        panel.taskText = ""
+        panel.setDraft("fixture", "")
         panel.delegate()
         check(panel.delegationState === "failed", "empty input rejected synchronously")
-        panel.taskText = "fixture original — not a user task"
+        panel.setDraft("fixture", "fixture original — not a user task")
         panel.delegate()
-        panel.taskText = "fixture newer draft"
+        panel.setDraft("fixture", "fixture newer draft")
         // A repeated action must not mutate the captured request.
         panel.delegate()
     }
